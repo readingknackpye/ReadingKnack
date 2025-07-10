@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Passages</title>
+</head>
+<body>
+  <h1>Passage List</h1>
+  <ul>
+    {% for passage in passages %}
+      <li>{{ passage.title }}</li>
+    {% endfor %}
+  </ul>
+</body>
+</html>

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Uploaded Documents</title>
+</head>
+<body>
+    <h1>Uploaded Documents</h1>
+    <ul>
+        {% for doc in documents %}
+            <li>{{ doc.title }} (uploaded at {{ doc.uploaded_at }})</li>
+        {% empty %}
+            <li>No documents uploaded yet.</li>
+        {% endfor %}
+    </ul>
+    <a href="{% url 'upload_document' %}">Upload another document</a>
+</body>
+</html>

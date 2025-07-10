@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --rk-purple: #a259e6;
+  --rk-blue: #2ec4f1;
+  --rk-pink: #e14eca;
+  --rk-dark: #22223b;
+}
+
+body {
+  font-family: 'Montserrat', Arial, sans-serif;
+  background: #f8f9fa;
+  color: var(--rk-dark);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-weight: 900;
+  color: var(--rk-dark);
+}
+
+a {
+  color: var(--rk-blue);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--rk-purple);
+}
+
+button, .btn {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(90deg, var(--rk-pink), var(--rk-purple), var(--rk-blue));
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.3s, box-shadow 0.3s;
+  box-shadow: 0 2px 8px rgba(162,89,230,0.08);
+}
+
+button:hover, .btn:hover {
+  background: linear-gradient(90deg, var(--rk-blue), var(--rk-purple), var(--rk-pink));
+  color: #fff;
+}
+
+nav {
+  background: #fff;
+  border-bottom: 2px solid var(--rk-blue);
+  padding: 1rem 0;
+  margin-bottom: 2rem;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Custom styles for Reading Knack */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Smooth transitions */
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
