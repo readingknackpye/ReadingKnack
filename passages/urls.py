@@ -19,6 +19,7 @@ urlpatterns = [
     path('upload/', views.upload_document, name='upload_document'),
     path('documents/', views.uploaded_documents_list, name='uploaded_documents_list'),
     path('submit-quiz/', SubmitQuizView.as_view(), name='submit_quiz'),
+    path('generate-questions/<int:document_id>/', views.generate_questions_for_document, name='generate_questions_for_document'),
     path('api/', include(router.urls)),  # <-- don't forget to include this
 ]
 
