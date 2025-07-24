@@ -63,7 +63,7 @@ class UploadedDocumentViewSet(viewsets.ModelViewSet):
     serializer_class = UploadedDocumentSerializer
 
     def perform_create(self, serializer):
-        instance = serializer.save()
+        instance = serializer.save(uploader=self.request.user)
         # Parse .docx file
         if instance.file.name.endswith('.docx'):
             doc = Document(instance.file)

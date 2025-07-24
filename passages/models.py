@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.conf import settings
 
 class GradeLevel(models.Model):
     name = models.CharField(max_length=20)
@@ -16,6 +17,7 @@ class SkillCategory(models.Model):
 class Passage(models.Model): 
     title = models.CharField(max_length=255) #passage title
     text = models.TextField() #the text
+    uploader = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
     grade_level = models.ForeignKey(GradeLevel, on_delete=models.CASCADE, default=1) 
     skill_category = models.ForeignKey(SkillCategory, on_delete=models.CASCADE, default=1)  # we'll create ID 1
 
@@ -23,7 +25,7 @@ class Passage(models.Model):
         return self.title #return title
     
 class Question(models.Model):
-    passage = models.ForeignKey(Passage, on_delete=models.CASCADE,)
+    passage = models.ForeignKey('Passage', on_delete=models.CASCADE,)
     question_text = models.TextField()
     correct_choice = models.CharField(max_length=1)
     explanation =  models.TextField()
@@ -46,6 +48,7 @@ class UploadedDocument(models.Model):
     parsed_text = models.TextField(blank=True, null=True)
     grade_level = models.ForeignKey(GradeLevel, on_delete=models.CASCADE, null=True, blank=True)
     skill_category = models.ForeignKey(SkillCategory, on_delete=models.CASCADE, null=True, blank=True)
+    uploader = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return self.title
