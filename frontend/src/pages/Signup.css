@@ -1,0 +1,42 @@
+
+* {
+    box-sizing: border-box;
+}
+.signupContainer {
+    max-width: 400px;
+    margin: 3rem auto;
+    text-align: center;
+}
+
+.signupTitle {
+    font-weight: 900;
+    font-size: 3rem;
+    margin-bottom: 24px;
+}
+
+.signupBox {
+    background: #fff;
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 20px 20px 12px rgba(162,89,230,0.08);
+}   
+
+.signupInput {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.signupButton {
+   width: 100%;
+    padding: 12px;
+    background: #6200ea;
+    color: #fff;
+    font-weight: bold;
+    border: none;
+    border-radius: 4px;
+}
+
+.signupButton.hover {
+    background: #4500b5;
+}
