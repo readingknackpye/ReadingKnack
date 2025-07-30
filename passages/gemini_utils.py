@@ -1,6 +1,7 @@
 import os
 import google.generativeai as genai
 from dotenv import load_dotenv
+import re
 
 # Load environment variables
 load_dotenv()
@@ -35,93 +36,55 @@ def parse_questions(raw_text):
     Parse the raw Gemini output into structured data.
 
     Args:
-        raw_text (str): The raw text output from the Gemini model.
+        raw_text (str): The raw text output from Gemini.
 
     Returns:
-        list[dict]: A list of dictionaries, each representing a question and its answers.
+        list[dict]: A list of question dicts with empty answers (for now).
     """
     questions = []
     current_question = None
 
+    # Detect lines like "1. **What is X?**"
+    question_pattern = re.compile(r'^\d+\.\s*\*\*(.+?)\*\*')
+
     for line in raw_text.splitlines():
         line = line.strip()
         if not line:
-            continue  # skip empty lines
+            continue
 
-        # Detect question start
-        if line.lower().startswith("q:") or line.lower().startswith("question"):
-            # Save previous question
+        match = question_pattern.match(line)
+        if match:
+            # Save previous question if it exists
             if current_question:
                 questions.append(current_question)
 
-            # Strip prefix like "Q: " or "Question 1: "
-            if ":" in line:
-                question_text = line.split(":", 1)[1].strip()
-            else:
-                question_text = line
-
+            question_text = match.group(1).strip()
             current_question = {
                 "question_text": question_text,
-                "answers": []
+                "answers": []  # We can add answer parsing later if Gemini outputs them
             }
-
-        # Detect answers start
-        elif line.lower().startswith("a:") or line[0].upper() in ["A", "B", "C", "D"]:
-            if current_question is None:
-                continue  # Ignore answers if no question started
-
-            # Strip "A:", "B.", or similar prefixes
-            if ":" in line:
-                answer_part = line.split(":", 1)[1].strip()
-                choice_letter = line[0].upper()
-            elif "." in line:
-                # Format like "A. answer text"
-                choice_letter = line[0].upper()
-                answer_part = line[2:].strip()
-            else:
-                choice_letter = line[0].upper()
-                answer_part = line[1:].strip()
-
-            # Check if marked correct
-            is_correct = "(correct)" in answer_part.lower()
-            answer_text = answer_part.replace("(correct)", "").strip()
-
-            current_question["answers"].append({
-                "choice_letter": choice_letter,
-                "choice_text": answer_text,
-                "is_correct": is_correct
-            })
-
         else:
-            # If continuing text for question or last answer
+            # Append extra explanation text to the current question
             if current_question:
-                if current_question["answers"]:
-                    # Append to last answer text
-                    current_question["answers"][-1]["choice_text"] += " " + line
-                else:
-                    # Append to question text
-                    current_question["question_text"] += " " + line
+                current_question["question_text"] += " " + line
 
-    # Add last question if exists
+    # Add the last question
     if current_question:
         questions.append(current_question)
 
     return questions
 
-# def save_parsed_questions(document, parsed_questions):
-#     for q in parsed_questions:
-
-# def save_parsed_questions(document, parsed_questions):
-#     for q in parsed_questions:
-#         new_question = QuizQuestion.objects.create(
-#             document=document,
-#             question_text=q["question_text"],
-#             explanation=""  # or fill if you get explanation
-#         )
-#         for ans in q["answers"]:
-#             QuizAnswer.objects.create(
-#                 question=new_question,
-#                 choice_letter=ans["choice_letter"],
-#                 choice_text=ans["choice_text"],
-#                 is_correct=ans["is_correct"]
-#             )
+def save_parsed_questions(document, parsed_questions):
+    for q in parsed_questions:
+        new_question = QuizQuestion.objects.create(
+            document=document,
+            question_text=q["question_text"],
+            explanation=""  # or fill if you get explanation
+        )
+        for ans in q["answers"]:
+            QuizAnswer.objects.create(
+                question=new_question,
+                choice_letter=ans["choice_letter"],
+                choice_text=ans["choice_text"],
+                is_correct=ans["is_correct"]
+            )
