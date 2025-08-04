@@ -1,5 +1,8 @@
 from django.shortcuts import render, get_object_or_404
-from passages.models import Passage, UploadedDocument, QuizQuestion, QuizAnswer, QuizResponse, UserAnswer, GradeLevel, SkillCategory
+from passages.models import (
+    Passage, UploadedDocument, QuizQuestion, QuizAnswer,
+    QuizResponse, UserAnswer, GradeLevel, SkillCategory
+)
 from django import forms
 from docx import Document
 from .forms import UploadedDocumentForm
@@ -14,9 +17,8 @@ from .serializers import (
 from django.http import JsonResponse
 import json
 from .authentication import CsrfExemptSessionAuthentication
-from django.views.decorators.csrf import csrf_exempt
 import os
-from passages.gemini_utils import generate_questions
+from passages.gemini_utils import generate_questions, parse_questions, save_parsed_questions
 
 
 def passage_list(request):
@@ -34,6 +36,23 @@ def upload_document(request):
 
             doc = Document(uploaded_doc.file)
             parsed_content = "\n".join([p.text for p in doc.paragraphs])
+            uploaded_doc.parsed_text = parsed_content
+
+            try:
+                print("Generating quiz questions with Gemini...")
+                questions_text = generate_questions(parsed_content[:3000])
+                print("Raw Gemini output:\n", questions_text)
+
+                parsed_questions = parse_questions(questions_text)
+                print("Parsed questions list:\n", parsed_questions)
+
+                save_parsed_questions(uploaded_doc, parsed_questions)
+                print("Quiz Questions saved to DB.")
+
+            except Exception as e:
+                print("Quiz generation failed:", str(e))
+
+            uploaded_doc.save()
 
             return render(request, 'passages/upload_success.html', {
                 'document': uploaded_doc,
@@ -63,7 +82,7 @@ class UploadedDocumentViewSet(viewsets.ModelViewSet):
     serializer_class = UploadedDocumentSerializer
 
     def perform_create(self, serializer):
-        instance = serializer.save()
+        instance = serializer.save(uploader=self.request.user)
         # Parse .docx file
         if instance.file.name.endswith('.docx'):
             doc = Document(instance.file)
@@ -74,13 +93,17 @@ class UploadedDocumentViewSet(viewsets.ModelViewSet):
             parsed_text = instance.parsed_text[:3000]  # Limit to 3K chars
             print("Generating quiz questions with Gemini...")
 
-            # Use Gemini API
+            print("📄 Uploaded document:", instance.title)
+            print("📄 Parsed text snippet:", instance.parsed_text[:300] if instance.parsed_text else "NO TEXT")
+
             questions_text = generate_questions(parsed_text)
+            print("🤖 Raw Gemini output:\n", questions_text)
 
-            # Optionally save this to the DB
-            # instance.generated_questions = questions_text
+            parsed_questions = parse_questions(questions_text)
+            print("🔍 Parsed questions list:", parsed_questions)
 
-            print("Quiz Questions:\n", questions_text)
+            save_parsed_questions(instance, parsed_questions)
+            print("💾 Questions saved to DB.")
 
         except Exception as e:
             print("Quiz generation failed:", str(e))
@@ -194,6 +217,7 @@ class SkillCategoryViewSet(viewsets.ModelViewSet):
     queryset = SkillCategory.objects.all()
     serializer_class = SkillCategorySerializer
 
+
 def generate_questions_for_document(request, document_id):
     # Get the UploadedDocument object by ID
     document = get_object_or_404(UploadedDocument, id=document_id)
@@ -209,8 +233,6 @@ def generate_questions_for_document(request, document_id):
 
     return JsonResponse({'questions': questions})
 
-
-#print("🔑 GEMINI KEY:", os.getenv("GEMINI_API_KEY"))
 
 
     
