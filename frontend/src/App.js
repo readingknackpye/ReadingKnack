@@ -8,6 +8,7 @@ import Quiz from './pages/Quiz';
 import Results from './pages/Results';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
           <Link to="/documents" className="btn" style={{ marginRight: 8 }}>Documents</Link>
           <Link to="/quiz" className="btn" style={{ marginRight: 8 }}>Quiz</Link>
           <Link to="/results" className="btn">Results</Link>
+          <Link to="/profile" className="btn">Profile</Link>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <Link to="/login" className="btn" style={{
@@ -70,6 +72,7 @@ function App() {
         <Route path="/results" element={<Results />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </Router>
   );
