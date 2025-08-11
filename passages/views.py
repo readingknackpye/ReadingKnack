@@ -1,18 +1,27 @@
 from django.shortcuts import render, get_object_or_404
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.utils.decorators import method_decorator
+from django.middleware.csrf import get_token
+from django.http import JsonResponse
 from passages.models import (
     Passage, UploadedDocument, QuizQuestion, QuizAnswer,
     QuizResponse, UserAnswer, GradeLevel, SkillCategory
 )
 from django import forms
 from docx import Document
-from .forms import UploadedDocumentForm
+from .forms import UploadedDocumentForm, UserRegistrationForm
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
 from .serializers import (
     UploadedDocumentSerializer, QuizQuestionSerializer, QuizAnswerSerializer,
-    QuizResponseSerializer, DocumentDetailSerializer, GradeLevelSerializer, SkillCategorySerializer
+    QuizResponseSerializer, DocumentDetailSerializer, GradeLevelSerializer, 
+    SkillCategorySerializer, UserRegistrationSerializer, UserSerializer
 )
 from django.http import JsonResponse
 import json
@@ -232,6 +241,150 @@ def generate_questions_for_document(request, document_id):
     questions = generate_questions(parsed_text)
 
     return JsonResponse({'questions': questions})
+
+
+class UserRegistrationView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []  # No authentication required for registration
+    
+    @method_decorator(ensure_csrf_cookie)
+    def get(self, request):
+        """Get CSRF token for the registration form"""
+        return JsonResponse({'csrfToken': get_token(request)})
+    
+    def post(self, request):
+        """Handle user registration"""
+        try:
+            # Handle both form data and JSON data
+            if request.content_type == 'application/json':
+                data = request.data
+            else:
+                # Handle form data - Django UserCreationForm uses password1 and password2
+                data = {
+                    'username': request.POST.get('username'),
+                    'password': request.POST.get('password1'),  # Django sends password1
+                    'password2': request.POST.get('password2'),
+                    'email': request.POST.get('email'),
+                    'first_name': request.POST.get('first_name'),
+                    'last_name': request.POST.get('last_name'),
+                }
+            
+            # Validate required fields
+            required_fields = ['username', 'password', 'password2', 'email', 'first_name', 'last_name']
+            missing_fields = [field for field in required_fields if not data.get(field)]
+            
+            if missing_fields:
+                return Response({
+                    'success': False,
+                    'error': f'Missing required fields: {", ".join(missing_fields)}'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Debug: Log the data being sent to serializer
+            print(f"Registration data: {data}")
+            
+            serializer = UserRegistrationSerializer(data=data)
+            if serializer.is_valid():
+                user = serializer.save()
+                
+                # Log the user in after successful registration
+                login(request, user)
+                
+                return Response({
+                    'success': True,
+                    'message': 'User registered successfully!',
+                    'user': UserSerializer(user).data
+                }, status=status.HTTP_201_CREATED)
+            else:
+                print(f"Serializer errors: {serializer.errors}")
+                return Response({
+                    'success': False,
+                    'errors': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            print(f"Registration exception: {e}")
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class UserLoginView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    
+    @method_decorator(ensure_csrf_cookie)
+    def get(self, request):
+        """Get CSRF token for the login form"""
+        return JsonResponse({'csrfToken': get_token(request)})
+    
+    def post(self, request):
+        """Handle user login"""
+        try:
+            # Handle both form data and JSON data
+            if request.content_type == 'application/json':
+                username = request.data.get('username')
+                password = request.data.get('password')
+            else:
+                # Handle form data
+                username = request.POST.get('username')
+                password = request.POST.get('password')
+            
+            if not username or not password:
+                return Response({
+                    'success': False,
+                    'error': 'Username and password are required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            user = authenticate(username=username, password=password)
+            
+            if user is not None:
+                login(request, user)
+                return Response({
+                    'success': True,
+                    'message': 'Login successful!',
+                    'user': UserSerializer(user).data
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'success': False,
+                    'error': 'Invalid credentials'
+                }, status=status.HTTP_401_UNAUTHORIZED)
+                
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class UserLogoutView(APIView):
+    def post(self, request):
+        """Handle user logout"""
+        try:
+            from django.contrib.auth import logout
+            logout(request)
+            return Response({
+                'success': True,
+                'message': 'Logout successful!'
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class UserProfileView(APIView):
+    def get(self, request):
+        """Get current user profile"""
+        if request.user.is_authenticated:
+            return Response({
+                'success': True,
+                'user': UserSerializer(request.user).data
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({
+                'success': False,
+                'error': 'User not authenticated'
+            }, status=status.HTTP_401_UNAUTHORIZED)
 
 
 
