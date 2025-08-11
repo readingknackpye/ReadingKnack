@@ -49,7 +49,6 @@ const Navbar = () => {
         <Link to="/upload" className="btn" style={{ marginRight: 8 }}>Upload</Link>
         <Link to="/documents" className="btn" style={{ marginRight: 8 }}>Documents</Link>
         <Link to="/quiz" className="btn" style={{ marginRight: 8 }}>Quiz</Link>
-        <Link to="/results" className="btn">Results</Link>
         <Link to="/profile" className="btn">Profile</Link>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>

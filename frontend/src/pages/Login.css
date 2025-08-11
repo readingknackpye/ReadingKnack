@@ -2,7 +2,7 @@
     box-sizing: border-box;
 }
 .logInContainer {
-    max-width: 400px;
+    max-width: 800px;
     margin: 3rem auto;
     text-align: center;
 }
@@ -18,6 +18,7 @@
     border: 12px;
     padding: 32px;
     box-shadow: 20px 20px 12px rgba(162,89,230,0.08);
+    border-radius: 20px;
 }
 
 .logInInput {
@@ -29,7 +30,7 @@
 .logInButton {
     width: 100%;
     padding: 12px;
-    background: #6200ea;
+    background: linear-gradient(90deg, var(--rk-purple), var(--rk-blue), var(--rk-pink));
     color: #fff;
     font-weight: bold;
     border: none;

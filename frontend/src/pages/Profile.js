@@ -66,7 +66,7 @@ const Profile = () => {
                                     className = "userAvatar"
                             />
                                 <div className = "avatarOverlay">
-                                    <span className = "avatarEditIcon">📝</span>
+                                    {/* <span className = "avatarEditIcon">📝</span> */}
                                 </div>
                         </div>
                     </div>
