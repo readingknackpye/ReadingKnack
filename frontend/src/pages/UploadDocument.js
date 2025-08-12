@@ -130,8 +130,7 @@ const UploadDocument = () => {
     <div className="upload-container">
       {/* Header */}
       <div className="upload-header">
-        <h1 className="upload-title">Upload Reading Passage</h1>
-        <p className="upload-subtitle">Upload a .docx file to create a new reading passage with quiz questions</p>
+        <p className="upload-subtitle">   ‎ </p>
       </div>
 
       {/* Upload Form */}
