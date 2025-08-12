@@ -377,13 +377,13 @@ const Quiz = () => {
 
       {/* Question Navigation */}
       <div className="bg-white rounded-xl shadow-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">📋 Question Navigation</h3>
-        <div className="grid grid-cols-5 md:grid-cols-10 gap-3">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Question Navigation</h3>
+        <div className="flex flex-wrap gap-2">
           {questions.map((question, index) => (
             <button
               key={question.id}
               onClick={() => setCurrentQuestion(index)}
-              className={`p-3 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md ${
+              className={`w-10 h-10 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md flex items-center justify-center ${
                 currentQuestion === index
                   ? 'bg-blue-600 text-white shadow-md'
                   : answers[question.id]
@@ -395,6 +395,22 @@ const Quiz = () => {
             </button>
           ))}
         </div>
+        
+        <div className="mt-4 flex items-center text-sm text-gray-600 space-x-4">
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-blue-600 rounded mr-2"></div>
+            Current
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-green-100 border-2 border-green-200 rounded mr-2"></div>
+            Answered
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-gray-100 border-2 border-gray-200 rounded mr-2"></div>
+            Unanswered
+          </div>
+        </div>
+      </div>
 
       {/* Question */}
       <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
@@ -492,24 +508,6 @@ const Quiz = () => {
               )}
             </button>
           )}
-        </div>
-      </div>
-
-
-        
-        <div className="mt-4 flex items-center text-sm text-gray-600 space-x-4">
-          <div className="flex items-center">
-            <div className="w-4 h-4 bg-blue-600 rounded mr-2"></div>
-            Current
-          </div>
-          <div className="flex items-center">
-            <div className="w-4 h-4 bg-green-100 border-2 border-green-200 rounded mr-2"></div>
-            Answered
-          </div>
-          <div className="flex items-center">
-            <div className="w-4 h-4 bg-gray-100 border-2 border-gray-200 rounded mr-2"></div>
-            Unanswered
-          </div>
         </div>
       </div>
     </div>
