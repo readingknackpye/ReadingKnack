@@ -25,6 +25,8 @@ urlpatterns = [
     # template pages (optional)
     path('signup/', TemplateView.as_view(template_name='passages/signup.html'), name='signup_form'),
     path('login/', TemplateView.as_view(template_name='passages/login.html'), name='login_form'),
+    path('upload/', TemplateView.as_view(template_name='passages/upload_form.html'), name='upload_form'),
+    
 
     # API
     path('api/', include(router.urls)),
