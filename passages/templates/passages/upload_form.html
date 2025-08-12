@@ -1,18 +1,19 @@
 <!DOCTYPE html>
 {% load static %}
 <html>
-    <head>
-        <title>Upload Word Document</title>
-        <link rel="stylesheet" type="text/css" href="{% static 'passages/style.css' %}">
-    </head>
-    <body>
-        <h1>Upload a Word Document</h1>
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
+  <head>
+    <title>Upload Word Document</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'passages/style.css' %}">
+  </head>
+  <body>
+    <h1>Upload a Word Document</h1>
+    <form method="post" action="/api/documents/" enctype="multipart/form-data">
+        {% csrf_token %}
         <h4>Title</h4>
-            {{ form.title }}
-            <input type="file" name="file" accept=".docx">
-            <button type="submit">Upload</button>
-        </form>
-    </body>
+        <input type="text" name="title" id="id_title" required />
+        <input type="file" name="file" accept=".docx" required>
+        <button type="submit">Upload</button>
+     </form>
+    
+  </body>
 </html>
