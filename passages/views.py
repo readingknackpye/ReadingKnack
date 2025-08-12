@@ -12,7 +12,7 @@ from passages.models import (
 )
 from django import forms
 from docx import Document
-from .forms import UploadedDocumentForm, UserRegistrationForm
+from .forms import UploadedDocumentForm
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
