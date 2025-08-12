@@ -4,10 +4,21 @@ const API_BASE_URL = 'http://localhost:8000/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  withCredentials: true,          // <-- send/receive cookies (sessionid, csrftoken)
+  xsrfCookieName: "csrftoken",    // <-- Django defaults
+  xsrfHeaderName: "X-CSRFToken",
+  headers: { "Content-Type": "application/json" },
 });
+
+/** -------- AUTH API -------- **/
+export const authAPI = {
+  // call once to set CSRF cookie (or GET /api/auth/login/ if you set @ensure_csrf_cookie there)
+  csrf: () => api.get("/auth/csrf/"),
+  register: (payload) => api.post("/auth/register/", payload),
+  login: (payload) => api.post("/auth/login/", payload),
+  logout: () => api.post("/auth/logout/"),
+  me: () => api.get("/auth/profile/"),
+};
 
 // Documents API
 export const documentsAPI = {
