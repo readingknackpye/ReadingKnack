@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'passages', # Custom app for the project
     'rest_framework',
     'corsheaders',
+    'storages',  # Required for S3-compatible storage
 ]
 
 MIDDLEWARE = [
@@ -132,8 +133,60 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Media files configuration
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# S3-Compatible Storage Configuration
+# Uncomment and configure these settings to use S3-compatible storage
+# For local development, you can keep using local storage
+
+# S3 Storage Settings
+USE_S3 = os.getenv('USE_S3', 'False') == 'True'
+
+# Debug logging for S3 configuration
+print(f"DEBUG: USE_S3 = {USE_S3}")
+print(f"DEBUG: AWS_ACCESS_KEY_ID = {os.getenv('AWS_ACCESS_KEY_ID', 'NOT_SET')[:20]}...")
+print(f"DEBUG: AWS_STORAGE_BUCKET_NAME = {os.getenv('AWS_STORAGE_BUCKET_NAME', 'NOT_SET')}")
+print(f"DEBUG: AWS_S3_ENDPOINT_URL = {os.getenv('AWS_S3_ENDPOINT_URL', 'NOT_SET')}")
+
+if USE_S3:
+    print("DEBUG: Configuring S3 storage...")
+    # S3-compatible storage backend
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    
+    # S3-compatible service configuration
+    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+    AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL')  # For S3-compatible services like MinIO, DigitalOcean Spaces, etc.
+    AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'us-east-1')
+    
+    # S3-compatible service specific settings
+    AWS_S3_CUSTOM_DOMAIN = os.getenv('AWS_S3_CUSTOM_DOMAIN')  # Optional: custom domain
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',
+    }
+    
+    # Security settings
+    AWS_S3_SECURE_URLS = os.getenv('AWS_S3_SECURE_URLS', 'True') == 'True'  # Use HTTPS
+    AWS_QUERYSTRING_AUTH = False  # Don't add complex authentication-related query parameters
+    
+    # File handling
+    AWS_DEFAULT_ACL = 'public-read'  # Set to None for private files
+    AWS_S3_FILE_OVERWRITE = False  # Don't overwrite files with the same name
+    
+    # Media files in S3
+    MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/'
+    MEDIA_ROOT = ''
+    
+    print(f"DEBUG: S3 storage configured with bucket: {AWS_STORAGE_BUCKET_NAME}")
+    print(f"DEBUG: MEDIA_URL set to: {MEDIA_URL}")
+else:
+    print("DEBUG: Using local storage...")
+    # Local storage (default)
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
