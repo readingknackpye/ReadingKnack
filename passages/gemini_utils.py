@@ -2,6 +2,8 @@ import os
 import google.generativeai as genai
 from dotenv import load_dotenv
 import re
+from django.db import transaction
+from .models import QuizQuestion, QuizAnswer
 
 # Load environment variables
 load_dotenv()
@@ -84,16 +86,48 @@ def parse_questions(raw_text):
 
 
 def save_parsed_questions(document, parsed_questions):
-    for q in parsed_questions:
-        new_question = QuizQuestion.objects.create(
-            document=document,
-            question_text=q["question_text"],
-            explanation=""  # or fill if you get explanation
-        )
-        for ans in q["answers"]:
-            QuizAnswer.objects.create(
-                question=new_question,
-                choice_letter=ans["choice_letter"],
-                choice_text=ans["choice_text"],
-                is_correct=ans["is_correct"]
-            )
+    """
+    Save parsed questions to the database with proper error handling.
+    
+    Args:
+        document: UploadedDocument instance
+        parsed_questions: List of parsed question dictionaries
+    
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        print(f"🔄 Attempting to save {len(parsed_questions)} questions to database...")
+        
+        with transaction.atomic():
+            for q in parsed_questions:
+                print(f"📝 Creating question: {q['question_text'][:50]}...")
+                
+                new_question = QuizQuestion.objects.create(
+                    document=document,
+                    question_text=q["question_text"],
+                    explanation=""  # or fill if you get explanation
+                )
+                
+                print(f"✅ Question created with ID: {new_question.id}")
+                
+                for ans in q["answers"]:
+                    QuizAnswer.objects.create(
+                        question=new_question,
+                        choice_letter=ans["choice_letter"],
+                        choice_text=ans["choice_text"],
+                        is_correct=ans["is_correct"]
+                    )
+                    print(f"   📍 Answer {ans['choice_letter']}: {ans['choice_text'][:30]}...")
+                
+                print(f"✅ All answers saved for question {new_question.id}")
+        
+        print(f"🎉 Successfully saved {len(parsed_questions)} questions with all answers!")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error saving questions to database: {str(e)}")
+        print(f"❌ Error type: {type(e).__name__}")
+        import traceback
+        traceback.print_exc()
+        return False
