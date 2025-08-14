@@ -20,15 +20,36 @@ const Login = () => {
     e.preventDefault();
     setError(null);
     setLoading(true);
+    
     try {
-      await authAPI.login({ username, password });   // sets sessionid cookie on success
-      // Optional: verify & load current user
-      await authAPI.me();
-      // Redirect wherever you want after login:
-      navigate('/');                                // or window.location.href = '/'
+      // Attempt to login
+      const loginResponse = await authAPI.login({ username, password });
+      
+      // Get user profile after successful login
+      const userResponse = await authAPI.me();
+      
+      // Store authentication data in localStorage
+      localStorage.setItem('authToken', 'authenticated'); // You can store actual token if you have one
+      localStorage.setItem('user', JSON.stringify({
+        username: username,
+        // Add any other user data you want to store
+        id: userResponse.data?.id,
+        email: userResponse.data?.email,
+      }));
+      
+      // Dispatch custom event to notify navbar about authentication change
+      window.dispatchEvent(new Event('storage'));
+      
+      // Show success message (optional)
+      console.log('Login successful!');
+      
+      // Redirect to home page
+      navigate('/');
+      
     } catch (err) {
       const data = err.response?.data;
       setError(data?.error || 'Login failed. Check your username/password.');
+      console.error('Login error:', err);
     } finally {
       setLoading(false);
     }
@@ -45,6 +66,7 @@ const Login = () => {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             className="logInInput"
+            required
           />
           <input
             type="password"
@@ -52,6 +74,7 @@ const Login = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="logInInput"
+            required
           />
           <button className="logInButton" type="submit" disabled={loading}>
             {loading ? 'Logging in…' : 'Log In'}

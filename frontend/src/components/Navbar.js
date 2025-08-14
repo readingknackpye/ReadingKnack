@@ -1,8 +1,73 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { authAPI } from '../api';
 
 const Navbar = () => {
   const location = useLocation();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [username, setUsername] = useState('');
+
+  // Check if user is authenticated on component mount
+  useEffect(() => {
+    // Check if user is logged in (you can store this in localStorage or sessionStorage)
+    const checkAuthStatus = () => {
+      const token = localStorage.getItem('authToken');
+      const user = localStorage.getItem('user');
+      
+      if (token && user) {
+        setIsAuthenticated(true);
+        try {
+          const userData = JSON.parse(user);
+          setUsername(userData.username || 'User');
+        } catch (e) {
+          setUsername('User');
+        }
+      } else {
+        setIsAuthenticated(false);
+        setUsername('');
+      }
+    };
+
+    checkAuthStatus();
+    
+    // Listen for storage changes (when user logs in/out in another tab)
+    window.addEventListener('storage', checkAuthStatus);
+    
+    // Listen for custom authentication events
+    const handleAuthChange = () => {
+      checkAuthStatus();
+    };
+    
+    window.addEventListener('authChange', handleAuthChange);
+    
+    return () => {
+      window.removeEventListener('storage', checkAuthStatus);
+      window.removeEventListener('authChange', handleAuthChange);
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      // Call Supabase logout API
+      await authAPI.logout();
+      console.log('Logged out from Supabase successfully');
+    } catch (error) {
+      console.error('Error logging out from Supabase:', error);
+      // Continue with frontend logout even if backend fails
+    } finally {
+      // Always clean up frontend state
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
+      setIsAuthenticated(false);
+      setUsername('');
+      
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(new Event('authChange'));
+      
+      // Redirect to home page
+      window.location.href = '/';
+    }
+  };
 
   const isActive = (path) => {
     return location.pathname === path;
@@ -56,23 +121,52 @@ const Navbar = () => {
         <Link to="/quiz" className="btn" style={{ marginRight: 8 }}>Quiz</Link>
         <Link to="/profile" className="btn">Profile</Link>
       </div>
+      
       <div style={{ 
         display: 'flex', 
         alignItems: 'center', 
         gap: '1rem',
         marginRight: '2rem',
       }}>
-        <Link to="/login" className="btn" style={{
-          background: '#fff',
-          color: 'var(--rk-purple)',
-          border: '2px solid var(--rk-purple)',
-          boxShadow: 'none',
-        }}>Log In</Link>
-        <Link to="/signup" className="btn" style={{
-          background: 'linear-gradient(90deg, var(--rk-purple), var(--rk-blue), var(--rk-pink))',
-          color: '#fff',
-          border: 'none',
-        }}>Sign Up</Link>
+        {isAuthenticated ? (
+          // User is logged in - show user info and logout
+          <>
+            <span style={{
+              color: 'var(--rk-dark)',
+              fontWeight: 500,
+              fontSize: '0.9rem',
+            }}>
+              Welcome, {username}!
+            </span>
+            <button 
+              onClick={handleLogout}
+              className="btn" 
+              style={{
+                background: '#fff',
+                color: '#dc3545',
+                border: '2px solid #dc3545',
+                boxShadow: 'none',
+              }}
+            >
+              Logout
+            </button>
+          </>
+        ) : (
+          // User is not logged in - show login/signup buttons
+          <>
+            <Link to="/login" className="btn" style={{
+              background: '#fff',
+              color: 'var(--rk-purple)',
+              border: '2px solid var(--rk-purple)',
+              boxShadow: 'none',
+            }}>Log In</Link>
+            <Link to="/signup" className="btn" style={{
+              background: 'linear-gradient(90deg, var(--rk-purple), var(--rk-blue), var(--rk-pink))',
+              color: '#fff',
+              border: 'none',
+            }}>Sign Up</Link>
+          </>
+        )}
       </div>
     </nav>
   );
