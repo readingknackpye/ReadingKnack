@@ -23,11 +23,16 @@ const Navbar = () => {
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: '2rem',
-      maxWidth: 1200,
-      margin: '0 auto 2rem auto',
-
+      width: '100%',
+      boxSizing: 'border-box',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '2rem',
+        marginLeft: '2rem',
+        flex: 1,
+      }}>
         <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', marginRight: 24 }}>
           <img src="/logo.png" alt="ReadingKnack Logo" style={{ height: 40, marginRight: 12 }} />
           <span style={{
@@ -51,7 +56,12 @@ const Navbar = () => {
         <Link to="/quiz" className="btn" style={{ marginRight: 8 }}>Quiz</Link>
         <Link to="/profile" className="btn">Profile</Link>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '1rem',
+        marginRight: '2rem',
+      }}>
         <Link to="/login" className="btn" style={{
           background: '#fff',
           color: 'var(--rk-purple)',
