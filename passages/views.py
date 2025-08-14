@@ -7,7 +7,7 @@ from django.utils.decorators import method_decorator
 from django.middleware.csrf import get_token
 from django.http import JsonResponse
 from passages.models import (
-    Passage, UploadedDocument, QuizQuestion, QuizAnswer,
+    UploadedDocument, QuizQuestion, QuizAnswer,
     QuizResponse, UserAnswer, GradeLevel, SkillCategory
 )
 from django import forms

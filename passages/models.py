@@ -14,32 +14,32 @@ class SkillCategory(models.Model):
     def __str__(self):
         return self.name
 
-class Passage(models.Model): 
-    title = models.CharField(max_length=255) #passage title
-    text = models.TextField() #the text
-    uploader = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
-    grade_level = models.ForeignKey(GradeLevel, on_delete=models.CASCADE, default=1) 
-    skill_category = models.ForeignKey(SkillCategory, on_delete=models.CASCADE, default=1)  # we'll create ID 1
+# class Passage(models.Model): 
+#     title = models.CharField(max_length=255) #passage title
+#     text = models.TextField() #the text
+#     uploader = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
+#     grade_level = models.ForeignKey(GradeLevel, on_delete=models.CASCADE, default=1) 
+#     skill_category = models.ForeignKey(SkillCategory, on_delete=models.CASCADE, default=1)  # we'll create ID 1
 
-    def __str__(self):
-        return self.title #return title
+#     def __str__(self):
+#         return self.title #return title
     
-class Question(models.Model):
-    passage = models.ForeignKey('Passage', on_delete=models.CASCADE,)
-    question_text = models.TextField()
-    correct_choice = models.CharField(max_length=1)
-    explanation =  models.TextField()
+# class Question(models.Model):
+#     passage = models.ForeignKey('Passage', on_delete=models.CASCADE,)
+#     question_text = models.TextField()
+#     correct_choice = models.CharField(max_length=1)
+#     explanation =  models.TextField()
     
-    def __str__(self):
-        return self.question_text
+#     def __str__(self):
+#         return self.question_text
 
-class AnswerChoice(models.Model):
-    question =  models.ForeignKey(Question, on_delete=models.CASCADE,)
-    choice_letter = models.CharField(max_length=1)
-    choice_text = models.TextField()
+# class AnswerChoice(models.Model):
+#     question =  models.ForeignKey(Question, on_delete=models.CASCADE,)
+#     choice_letter = models.CharField(max_length=1)
+#     choice_text = models.TextField()
 
-    def __str__(self):
-        return self.choice_letter
+#     def __str__(self):
+#         return self.choice_letter
     
 class UploadedDocument(models.Model):
     title = models.CharField(max_length=255)
