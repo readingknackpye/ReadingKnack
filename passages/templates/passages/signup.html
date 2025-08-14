@@ -86,7 +86,7 @@
         document.getElementById('csrfDebug').textContent = csrfToken ? csrfToken.substring(0, 20) + '...' : 'Not found';
         
         // Test server connection
-        fetch('/auth/register/')
+        fetch('/api/auth/register/')
             .then(response => {
                 document.getElementById('serverStatus').textContent = `Connected (${response.status})`;
                 document.getElementById('serverStatus').className = 'text-success';
@@ -126,10 +126,10 @@
         }
         
         try {
-            console.log('Sending request to /auth/register/...');
+            console.log('Sending request to /api/auth/register/...');
             console.log('CSRF Token:', csrfToken);
             
-            const response = await fetch('/auth/register/', {
+            const response = await fetch('/api/auth/register/', {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': csrfToken
