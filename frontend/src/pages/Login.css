@@ -35,8 +35,6 @@
     font-weight: bold;
     border: none;
     border-radius: 4px;
-}
-
-.logInButton:hover {
-    background: #4500b5;
+    cursor: pointer;
+    transition: none;
 }
