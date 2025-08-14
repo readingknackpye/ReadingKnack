@@ -1,18 +1,21 @@
 from django.urls import path, include
 from django.views.generic import TemplateView
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.http import JsonResponse
+from rest_framework import routers
+
 from .views import (
     SubmitQuizView, UserRegistrationView, UserLoginView, UserLogoutView, UserProfileView,
     UploadedDocumentViewSet, QuizQuestionViewSet, QuizAnswerViewSet,
     QuizResponseViewSet, GradeLevelViewSet, SkillCategoryViewSet
 )
-from rest_framework import routers
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.http import JsonResponse
 
+# CSRF ping for frontend
 @ensure_csrf_cookie
 def csrf_ping(request):
     return JsonResponse({"detail": "CSRF cookie set"})
 
+# DRF router
 router = routers.DefaultRouter()
 router.register(r'documents', UploadedDocumentViewSet, basename='documents')
 router.register(r'questions', QuizQuestionViewSet, basename='questions')
@@ -21,15 +24,15 @@ router.register(r'responses', QuizResponseViewSet, basename='responses')
 router.register(r'grade-levels', GradeLevelViewSet, basename='grade-levels')
 router.register(r'skill-categories', SkillCategoryViewSet, basename='skill-categories')
 
+# URL patterns
 urlpatterns = [
-    # template pages (optional)
+    # Template pages
     path('signup/', TemplateView.as_view(template_name='passages/signup.html'), name='signup_form'),
     path('login/', TemplateView.as_view(template_name='passages/login.html'), name='login_form'),
     path('upload/', TemplateView.as_view(template_name='passages/upload_form.html'), name='upload_form'),
-    
 
-    # API
-    path('api/', include(router.urls)),
+    # API endpoints
+    path('api/', include(router.urls)),  # /api/documents/, /api/questions/, etc.
     path('api/auth/register/', UserRegistrationView.as_view(), name='user_register'),
     path('api/auth/login/',    UserLoginView.as_view(),       name='user_login'),
     path('api/auth/logout/',   UserLogoutView.as_view(),      name='user_logout'),
@@ -37,3 +40,4 @@ urlpatterns = [
     path('api/auth/csrf/',     csrf_ping,                     name='csrf_ping'),
     
 ]
+

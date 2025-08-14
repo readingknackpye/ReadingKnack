@@ -31,13 +31,13 @@ export const documentsAPI = {
   // Get document detail with questions
   getDetail: (id) => api.get(`/documents/${id}/detail/`),
   
-  // Upload new document
-  upload: (formData) => api.post('/documents/', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  }),
-  
+ // Upload new document
+upload: (formData) => api.post('documents/', formData, {
+  headers: {
+    'Content-Type': 'multipart/form-data',
+  },
+}),
+ 
   // Update document
   update: (id, data) => api.put(`/documents/${id}/`, data),
   
