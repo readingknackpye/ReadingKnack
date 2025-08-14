@@ -107,12 +107,14 @@ const UploadDocument = () => {
       // Step 1: Upload the document
       const response = await documentsAPI.upload(uploadData);
       const docId = response.data.id;
-      setSuccess('Document uploaded successfully! Generating questions...');
+      // setSuccess('Document uploaded successfully! Generating questions...');
 
       // Step 2: Call backend to generate questions
       const questionsRes = await documentsAPI.generateQuestions(docId);
       setQuestions(questionsRes.data.questions);
 
+      setError(''); 
+      setSuccess('Document uploaded successfully! Generating questions...');
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.error || 'Failed to upload document');
@@ -130,7 +132,7 @@ const UploadDocument = () => {
     <div className="upload-container">
       {/* Header */}
       <div className="upload-header">
-        <p className="upload-subtitle">   ‎ </p>
+        <p className="upload-subtitle"> </p>
       </div>
 
       {/* Upload Form */}
