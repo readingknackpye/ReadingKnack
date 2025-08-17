@@ -5,7 +5,7 @@ import './Quiz.css';
 
   const Quiz = () => {
   // Toggle this to switch between mock and real data
-  const USE_MOCK_DATA = true; // Set to false when ready for backend
+  const USE_MOCK_DATA = false; // Set to false when ready for backend
 
   const { documentId } = useParams();
   const navigate = useNavigate();
@@ -101,11 +101,10 @@ import './Quiz.css';
   getMockQuestions()
   ]);
   } else {
-  // Use real API calls
-  [documentRes, questionsRes] = await Promise.all([
-  documentsAPI.getById(documentId),
-  documentsAPI.getDetail(documentId)
-  ]);
+  // Use real API calls - getDetail includes both document info and questions
+  const detailRes = await documentsAPI.getDetail(documentId);
+  documentRes = { data: detailRes.data };
+  questionsRes = { data: { questions: detailRes.data.questions || [] } };
   }
   
   setDocument(documentRes.data);
@@ -182,11 +181,12 @@ import './Quiz.css';
   // Real API submission
   response = await quizAPI.submit({
   document_id: parseInt(documentId),
+  user_name: 'Anonymous', // You can add a username input field later
   answers: answersArray
   });
 
-  // Navigate to results page with quiz data (when backend is ready)
-  navigate('/results', {
+  // Navigate to results page with quiz data
+  navigate('/profile', {
   state: {
   quizResult: response.data,
   document: document,
@@ -300,7 +300,7 @@ import './Quiz.css';
   }
 
   const currentQ = questions[currentQuestion];
-  const passageText = document?.content || document?.parsed_text || document?.text || '';
+  const passageText = document?.parsed_text || document?.content || document?.text || '';
 
   return (
   <div className="quiz-container">

@@ -7,7 +7,7 @@ from rest_framework import routers
 from .views import (
     SubmitQuizView, UserRegistrationView, UserLoginView, UserLogoutView, UserProfileView,
     UploadedDocumentViewSet, QuizQuestionViewSet, QuizAnswerViewSet,
-    QuizResponseViewSet, GradeLevelViewSet, SkillCategoryViewSet
+    QuizResponseViewSet, GradeLevelViewSet, SkillCategoryViewSet, DocumentDetailView
 )
 
 # CSRF ping for frontend
@@ -33,6 +33,8 @@ urlpatterns = [
 
     # API endpoints
     path('api/', include(router.urls)),  # /api/documents/, /api/questions/, etc.
+    path('api/documents/<int:pk>/detail/', DocumentDetailView.as_view(), name='document_detail'),
+    path('api/submit-quiz/', SubmitQuizView.as_view(), name='submit_quiz'),
     path('api/auth/register/', UserRegistrationView.as_view(), name='user_register'),
     path('api/auth/login/',    UserLoginView.as_view(),       name='user_login'),
     path('api/auth/logout/',   UserLogoutView.as_view(),      name='user_logout'),

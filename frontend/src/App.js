@@ -19,7 +19,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/upload" element={<UploadDocument />} />
         <Route path="/documents" element={<DocumentsList />} />
-        <Route path="/quiz" element={<Quiz />} />
+        <Route path="/quiz/:documentId" element={<Quiz />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/profile" element={<Profile />} />
