@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { documentsAPI, gradeLevelsAPI, skillCategoriesAPI } from '../api';
+import DocumentModal from '../components/DocumentModal';
+import './DocumentList.css';
 
 const DocumentList = () => {
   const [documents, setDocuments] = useState([]);
@@ -11,6 +13,8 @@ const DocumentList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGrade, setSelectedGrade] = useState('');
   const [selectedSkill, setSelectedSkill] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -53,55 +57,70 @@ const DocumentList = () => {
     });
   };
 
+  const handleReadClick = (doc) => {
+    setSelectedDocument(doc);
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setSelectedDocument(null);
+  };
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="document-list-container">
+        <div className="card">
+          <div className="loading-message">Loading documents...</div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center py-12">
-        <div className="text-red-600 mb-4">{error}</div>
-        <button 
-          onClick={fetchData}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          Try Again
-        </button>
+      <div className="document-list-container">
+        <div className="card">
+          <div className="error-message">{error}</div>
+          <button onClick={fetchData} className="btn btn-primary">
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Reading Passages</h1>
-        <p className="text-gray-600">Browse and explore all uploaded reading passages</p>
+    <div className="document-list-container">
+      {/* Header Card */}
+      <div className="card header-card">
+        <div className="header-content">
+          <h1 className="page-title">Reading Passages</h1>
+          <p className="page-subtitle">Browse and explore all uploaded reading passages</p>
+        </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <div className="grid md:grid-cols-4 gap-4">
+      {/* Filters Card */}
+      <div className="card filters-card">
+        <h2 className="card-title">Search & Filter</h2>
+        <div className="filters-grid">
           {/* Search */}
-          <div className="relative">
+          <div className="search-container">
             <input
               type="text"
               placeholder="Search passages..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="search-input"
             />
+            <span className="search-icon">🔍</span>
           </div>
 
           {/* Grade Level Filter */}
           <select
             value={selectedGrade}
             onChange={(e) => setSelectedGrade(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="filter-select"
           >
             <option value="">All Grade Levels</option>
             {gradeLevels.map(grade => (
@@ -113,7 +132,7 @@ const DocumentList = () => {
           <select
             value={selectedSkill}
             onChange={(e) => setSelectedSkill(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="filter-select"
           >
             <option value="">All Skills</option>
             {skillCategories.map(skill => (
@@ -128,7 +147,7 @@ const DocumentList = () => {
               setSelectedGrade('');
               setSelectedSkill('');
             }}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            className="btn btn-secondary clear-filters-btn"
           >
             Clear Filters
           </button>
@@ -136,83 +155,94 @@ const DocumentList = () => {
       </div>
 
       {/* Results Count */}
-      <div className="mb-6">
-        <p className="text-gray-600">
+      <div className="results-count">
+        <p className="count-text">
           Showing {filteredDocuments.length} of {documents.length} passages
         </p>
       </div>
 
       {/* Documents Grid */}
       {filteredDocuments.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold text-gray-600 mb-2">No passages found</h3>
-          <p className="text-gray-500 mb-4">
-            {documents.length === 0 
-              ? "No passages have been uploaded yet." 
-              : "No passages match your current filters."
-            }
-          </p>
-          {documents.length === 0 && (
-            <Link
-              to="/upload"
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              Upload Your First Passage
-            </Link>
-          )}
+        <div className="card empty-state-card">
+          <div className="empty-state-content">
+            <h3 className="empty-state-title">No passages found</h3>
+            <p className="empty-state-text">
+              {documents.length === 0 
+                ? "No passages have been uploaded yet." 
+                : "No passages match your current filters."
+              }
+            </p>
+            {documents.length === 0 && (
+              <Link to="/upload" className="btn btn-primary">
+                Upload Your First Passage
+              </Link>
+            )}
+          </div>
         </div>
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="documents-grid">
           {filteredDocuments.map(doc => (
-            <div key={doc.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-100">
-              <div className="p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-2">
+            <div key={doc.id} className="card document-card">
+              <div className="document-header">
+                <h3 className="document-title">
                   {doc.title}
                 </h3>
                 
-                <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                <div className="document-meta">
+                  <div className="meta-item">
+                    <span className="meta-icon">📅</span>
+                    {formatDate(doc.uploaded_at)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="document-content">
+                <p className="document-preview">
                   {doc.parsed_text?.substring(0, 150)}...
                 </p>
+              </div>
 
-                <div className="flex items-center text-sm text-gray-500 mb-4">
-                  📅
-                  {formatDate(doc.uploaded_at)}
-                </div>
+              <div className="document-tags">
+                {doc.grade_level && (
+                  <span className="tag grade-tag">
+                    {doc.grade_level.name}
+                  </span>
+                )}
+                {doc.skill_category && (
+                  <span className="tag skill-tag">
+                    {doc.skill_category.name}
+                  </span>
+                )}
+              </div>
 
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {doc.grade_level && (
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                      {doc.grade_level.name}
-                    </span>
-                  )}
-                  {doc.skill_category && (
-                    <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                      {doc.skill_category.name}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex gap-2">
-                  <Link
-                    to={`/documents/${doc.id}`}
-                    className="flex-1 text-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    <span className="mr-1">📖</span>
-                    Read
-                  </Link>
-                  <Link
-                    to={`/quiz/${doc.id}`}
-                    className="flex-1 text-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors"
-                  >
-                    <span className="mr-1">🎓</span>
-                    Quiz
-                  </Link>
-                </div>
+              <div className="document-actions">
+                <button
+                  onClick={() => handleReadClick(doc)}
+                  className="btn btn-secondary action-btn"
+                >
+                  <span className="btn-icon">📖</span>
+                  Read
+                </button>
+                <Link
+                  to={`/quiz/${doc.id}`}
+                  className="btn btn-primary action-btn"
+                >
+                  <span className="btn-icon">🎓</span>
+                  Quiz
+                </Link>
               </div>
             </div>
           ))}
         </div>
       )}
+
+      {/* Document Modal */}
+      <DocumentModal
+        isOpen={modalOpen}
+        onClose={handleCloseModal}
+        documentId={selectedDocument?.id}
+        documentTitle={selectedDocument?.title}
+      />
     </div>
   );
 };

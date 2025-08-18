@@ -20,11 +20,28 @@ def generate_questions(text):
     Given a passage of text, generate 7 reading comprehension questions, using Gemini.
     Falls back to another model if the first one fails.
     """
-    prompt = f"""Based on this passage, generate exactly 7 reading comprehension questions. Each question should have 4 multiple-choice answers labeled A, B, C, D.  
-    Also, indicate the correct answer like this:  
-    Answer: B
-    Passage:  
-    {text}"""
+    prompt = f"""Based on this passage, generate exactly 7 reading comprehension questions. 
+
+IMPORTANT: Use EXACTLY this format for each question:
+
+**1. Question text here?**
+A) First choice text
+B) Second choice text  
+C) Third choice text
+D) Fourth choice text
+Answer: C
+
+**2. Next question here?**
+A) Choice A text
+B) Choice B text
+C) Choice C text
+D) Choice D text
+Answer: B
+
+(Continue for all 7 questions)
+
+Passage:
+{text}"""
 
     
     for model_name in [PRIMARY_MODEL, FALLBACK_MODEL]:

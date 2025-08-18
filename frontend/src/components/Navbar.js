@@ -118,7 +118,7 @@ const Navbar = () => {
         </Link>
         <Link to="/upload" className="btn" style={{ marginRight: 8 }}>Upload</Link>
         <Link to="/documents" className="btn" style={{ marginRight: 8 }}>Documents</Link>
-        <Link to="/quiz" className="btn" style={{ marginRight: 8 }}>Quiz</Link>
+        
         <Link to="/profile" className="btn">Profile</Link>
       </div>
       

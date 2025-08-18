@@ -1,84 +1,115 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { authAPI } from '../api';
 import './Profile.css';
 
 const Profile = () => {
-  const [user, setUser] = useState({
-    username: 'Username',
-  });
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({
-    username: user.username,
-  });
+  // Fetch user data on component mount
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
 
-  const handleProfileEdit = () => {
-    setIsEditing(true);
+  const fetchUserProfile = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await authAPI.me();
+      
+      if (response.data.success) {
+        const userData = response.data.user;
+        setUser(userData);
+      } else {
+        setError('Failed to fetch user profile');
+      }
+    } catch (err) {
+      console.error('Error fetching user profile:', err);
+      setError('Failed to load profile. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSave = () => {
-    setUser({
-      ...user,
-      username: editForm.username,
-    });
-    setIsEditing(false);
-  };
+  if (loading) {
+    return (
+      <div className="profileContainer">
+        <div className="profileCard">
+          <div className="profileContent">
+            <div className="loadingMessage">Loading profile...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const handleCancel = () => {
-    setEditForm({
-      username: user.username,
-    });
-    setIsEditing(false);
-  };
+  if (error) {
+    return (
+      <div className="profileContainer">
+        <div className="profileCard">
+          <div className="profileContent">
+            <div className="errorMessage">{error}</div>
+            <button className="retryButton" onClick={fetchUserProfile}>
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setEditForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  if (!user) {
+    return (
+      <div className="profileContainer">
+        <div className="profileCard">
+          <div className="profileContent">
+            <div className="errorMessage">No user data available</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="profileContainer">
       <div className="profileCard">
         <div className="profileHeader">
           <h1 className="profileTitle">Profile</h1>
-          {!isEditing && (
-            <button className="editButton" onClick={handleProfileEdit}>
-              Edit Profile
-            </button>
-          )}
         </div>
 
         <div className="profileContent">
-          {/* Username Section */}
-          <div className="usernameSection">
-            <label className="fieldLabel">Username</label>
-            {isEditing ? (
-              <input
-                type="text"
-                name="username"
-                value={editForm.username}
-                onChange={handleInputChange}
-                className="editInput"
-                placeholder="Enter username"
-              />
-            ) : (
-              <div className="usernameDisplay">{user.username}</div>
-            )}
+          {/* First Name Section */}
+          <div className="fieldSection">
+            <label className="fieldLabel">First Name</label>
+            <div className="fieldDisplay">{user.first_name || 'Not provided'}</div>
           </div>
 
-          {/* Buttons */}
-          {isEditing && (
-            <div className="actionButtons">
-              <button className="saveButton" onClick={handleSave}>
-                Save Changes
-              </button>
-              <button className="cancelButton" onClick={handleCancel}>
-                Cancel
-              </button>
+          {/* Last Name Section */}
+          <div className="fieldSection">
+            <label className="fieldLabel">Last Name</label>
+            <div className="fieldDisplay">{user.last_name || 'Not provided'}</div>
+          </div>
+
+          {/* Username Section */}
+          <div className="fieldSection">
+            <label className="fieldLabel">Username</label>
+            <div className="fieldDisplay">{user.username}</div>
+          </div>
+
+          {/* Email Section */}
+          <div className="fieldSection">
+            <label className="fieldLabel">Email</label>
+            <div className="fieldDisplay">{user.email || 'Not provided'}</div>
+          </div>
+
+          {/* Member Since Section */}
+          <div className="fieldSection">
+            <label className="fieldLabel">Member Since</label>
+            <div className="fieldDisplay">
+              {user.date_joined ? new Date(user.date_joined).toLocaleDateString() : 'Unknown'}
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

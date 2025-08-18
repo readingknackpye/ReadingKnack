@@ -30,10 +30,6 @@ body {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.profileCard:hover {
-    transform: translateY(-5px);
-    box-shadow: 20px 20px 12px rgba(162,89,230,0.08);
-}
 
 .profileHeader {
     font-size: 48px;
@@ -119,7 +115,8 @@ body {
     color: black;
 }
 
-.usernameSection {
+/* Generic field section styles */
+.fieldSection {
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -130,6 +127,22 @@ body {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+.fieldDisplay {
+    /* border: 3px solid purple; */
+    font-weight: 600;
+    padding: 15px;
+    border-radius: 10px;
+    background-color: #f8f9fa;
+    min-height: 20px;
+}
+
+/* Keep username section for backward compatibility */
+.usernameSection {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .usernameDisplay {
@@ -145,7 +158,7 @@ body {
     border-radius: 10px;
     font-size: 1rem;
     transition: border-color 0.2s ease;
-
+    border: 1px solid #ddd;
 }
 
 .editInput:focus {
@@ -173,6 +186,44 @@ body {
     background: white;
     border-color: purple;
     font-size: 12px;
+}
+
+/* Loading and error states */
+.loadingMessage {
+    text-align: center;
+    font-size: 1.2rem;
+    color: #666;
+    padding: 40px;
+}
+
+.errorMessage {
+    text-align: center;
+    font-size: 1.2rem;
+    color: #dc3545;
+    padding: 20px;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 10px;
+    margin: 20px 0;
+}
+
+.retryButton {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 25px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: #007bff;
+    color: white;
+    margin: 0 auto;
+    display: block;
+}
+
+.retryButton:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
 }
 
 .actionButtons {

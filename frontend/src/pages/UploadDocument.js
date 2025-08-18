@@ -107,14 +107,12 @@ const UploadDocument = () => {
       // Step 1: Upload the document
       const response = await documentsAPI.upload(uploadData);
       const docId = response.data.id;
-      setSuccess('Document uploaded successfully! Generating questions...');
+      setSuccess('Document uploaded successfully! Redirecting to quiz...');
 
-      // Step 2: Call backend to generate questions
-      const questionsRes = await documentsAPI.generateQuestions(docId);
-      setQuestions(questionsRes.data.questions);
-
-      // setError(''); 
-      // setSuccess('Document uploaded successfully! Generating questions...');
+      // Redirect to quiz page after a short delay
+      setTimeout(() => {
+        navigate(`/quiz/${docId}`);
+      }, 1500);
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.error || 'Failed to upload document');
