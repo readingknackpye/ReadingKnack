@@ -18,6 +18,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action as drf_action
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
+from rest_framework.exceptions import ValidationError
 from .serializers import (
     UploadedDocumentSerializer, QuizQuestionSerializer, QuizAnswerSerializer,
     QuizResponseSerializer, DocumentDetailSerializer, GradeLevelSerializer, 
@@ -29,7 +30,14 @@ from .authentication import CsrfExemptSessionAuthentication
 import os
 from passages.gemini_utils import generate_questions, parse_questions, save_parsed_questions
 import io
-from .pye_parser import parse_pye, extract_paragraphs
+from .pye_parser import (
+    PYEParseError,
+    SUPPORTED_EXTENSIONS,
+    extract_paragraphs,
+    format_validation_errors,
+    parse_pye,
+    validate,
+)
 
 
 # def passage_list(request):
@@ -93,16 +101,27 @@ class UploadedDocumentViewSet(viewsets.ModelViewSet):
     serializer_class = UploadedDocumentSerializer
 
     def perform_create(self, serializer):
-        instance = serializer.save(uploader=self.request.user)
-        if not instance.file.name.endswith('.docx'):
-            return
+        uploader = self.request.user if self.request.user.is_authenticated else None
+        instance = serializer.save(uploader=uploader)
+        file_extension = os.path.splitext(instance.file.name)[1].lower()
+        if file_extension not in SUPPORTED_EXTENSIONS:
+            instance.delete()
+            supported = ", ".join(sorted(SUPPORTED_EXTENSIONS))
+            raise ValidationError({"file": f"Unsupported file type. Please upload one of: {supported}."})
 
-        # Read the uploaded .docx safely into memory
+        # Read the uploaded document safely into memory
         with instance.file.open('rb') as fh:
             data = fh.read()
 
         # Parse the PYE format: passage + questions + choices + answer key
-        parsed = parse_pye(extract_paragraphs(io.BytesIO(data)))
+        try:
+            parsed = parse_pye(extract_paragraphs(io.BytesIO(data), file_name=instance.file.name))
+            problems = validate(parsed)
+            if problems:
+                raise PYEParseError(format_validation_errors(problems))
+        except PYEParseError as exc:
+            instance.delete()
+            raise ValidationError({"file": str(exc)})
         print(f"PARSED {len(parsed.questions)} questions from '{instance.title}'")
 
         # Save the reading passage onto the document

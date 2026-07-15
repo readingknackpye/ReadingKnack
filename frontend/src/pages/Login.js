@@ -22,25 +22,21 @@ const Login = () => {
     setLoading(true);
     
     try {
-      // Attempt to login
       const loginResponse = await authAPI.login({ username, password });
+      const user = loginResponse.data?.user;
       
-      // Get user profile after successful login
-      const userResponse = await authAPI.me();
-      
-      // Store authentication data in localStorage
-      localStorage.setItem('authToken', 'authenticated'); // You can store actual token if you have one
+      if (!loginResponse.data?.success || !user) {
+        throw new Error(loginResponse.data?.error || 'Login failed.');
+      }
+
       localStorage.setItem('user', JSON.stringify({
-        username: username,
-        // Add any other user data you want to store
-        id: userResponse.data?.id,
-        email: userResponse.data?.email,
+        id: user.id,
+        username: user.username,
+        email: user.email,
       }));
+      localStorage.setItem('authToken', 'authenticated');
       
-      // Dispatch custom event to notify navbar about authentication change
-      window.dispatchEvent(new Event('storage'));
-      
-      // Show success message (optional)
+      window.dispatchEvent(new Event('authChange'));
       console.log('Login successful!');
       
       // Redirect to home page

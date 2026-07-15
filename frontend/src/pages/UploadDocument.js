@@ -56,8 +56,14 @@ const UploadDocument = () => {
   };
 
   const handleFileSelect = (file) => {
-    if (file.type !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-      setError('Please select a .docx file');
+    const fileName = file?.name?.toLowerCase() || '';
+    const isDocx =
+      file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+      fileName.endsWith('.docx');
+    const isPdf = file.type === 'application/pdf' || fileName.endsWith('.pdf');
+
+    if (!isDocx && !isPdf) {
+      setError('Please select a .docx or .pdf file');
       return;
     }
     
@@ -115,7 +121,13 @@ const UploadDocument = () => {
       }, 1500);
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.error || 'Failed to upload document');
+      const data = err.response?.data;
+      const message =
+        data?.error ||
+        data?.file ||
+        (data && typeof data === 'object' ? Object.values(data).flat().join(' ') : null) ||
+        'Failed to upload document';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -183,18 +195,18 @@ const UploadDocument = () => {
                   <span className="file-drop-icon">📁</span>
                   <div>
                     <p className="file-drop-text">
-                      Drop your .docx file here, or{' '}
+                      Drop your .docx or .pdf file here, or{' '}
                       <label className="file-browse-link">
                         browse
                         <input
                           type="file"
-                          accept=".docx"
+                          accept=".docx,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf"
                           onChange={(e) => handleFileSelect(e.target.files[0])}
                           className="hidden"
                         />
                       </label>
                     </p>
-                    <p className="file-drop-hint">Only .docx files up to 10MB are supported</p>
+                    <p className="file-drop-hint">Only .docx and .pdf files up to 10MB are supported</p>
                   </div>
                 </div>
               )}
