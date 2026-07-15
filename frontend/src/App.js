@@ -8,6 +8,7 @@ import Quiz from './pages/Quiz';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Profile from './pages/Profile';
+import Results from './pages/Results';
 import Navbar from './components/Navbar';
 import UploadDocument from './pages/UploadDocument';
 
@@ -23,6 +24,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/results" element={<Results />} />
       </Routes>
     </Router>
   );
