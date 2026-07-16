@@ -398,4 +398,3 @@ class UserProfileView(APIView):
                 'success': False,
                 'error': 'User not authenticated'
             }, status=status.HTTP_401_UNAUTHORIZED)
-    
