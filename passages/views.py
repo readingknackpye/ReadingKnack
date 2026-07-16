@@ -27,6 +27,7 @@ from django.http import JsonResponse
 import json
 from .authentication import CsrfExemptSessionAuthentication
 import os
+from .docx_parser import parse_uploaded_docx
 from passages.gemini_utils import generate_questions, parse_questions, save_parsed_questions
 
 
@@ -93,12 +94,14 @@ class UploadedDocumentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         instance = serializer.save(uploader=self.request.user)
         # Parse .docx file
-        if instance.file.name.endswith('.docx'):
-            doc = Document(instance.file)
-            full_text = [para.text for para in doc.paragraphs]
-            instance.parsed_text = '\n'.join(full_text)
-            # Save the parsed text first
-            instance.save()
+        if instance.file.name.lower().endswith('.docx'):
+            parsed_doc = parse_uploaded_docx(instance.file)
+            instance.parsed_text = parsed_doc.parsed_text
+            instance.save(update_fields=['parsed_text'])
+
+            if parsed_doc.questions:
+                save_parsed_questions(instance, parsed_doc.questions)
+                return
 
         try:
             parsed_text = instance.parsed_text[:3000]  # Limit to 3K chars
