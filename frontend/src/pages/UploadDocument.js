@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { documentsAPI, gradeLevelsAPI, skillCategoriesAPI } from '../api';
+import {
+  documentsAPI,
+  gradeLevelsAPI,
+  skillCategoriesAPI,
+  authAPI,
+} from '../api';
+
 
 const UploadDocument = () => {
   const navigate = useNavigate();
@@ -17,10 +23,25 @@ const UploadDocument = () => {
   const [success, setSuccess] = useState('');
   const [dragActive, setDragActive] = useState(false);
   const [questions, setQuestions] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userLoading, setUserLoading] = useState(true);
 
   useEffect(() => {
-    fetchOptions();
-  }, []);
+  fetchOptions();
+  fetchCurrentUser();
+}, []);
+
+const fetchCurrentUser = async () => {
+  try {
+    const response = await authAPI.me();
+    setCurrentUser(response.data);
+  } catch (err) {
+    console.error('Failed to load current user:', err);
+    setCurrentUser(null);
+  } finally {
+    setUserLoading(false);
+  }
+};
 
   const fetchOptions = async () => {
     try {
@@ -78,6 +99,21 @@ const UploadDocument = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (userLoading) {
+    setError('Please wait while your account permissions are being checked.');
+    return;
+  }
+
+  if (!currentUser) {
+    setError('You must be logged in to upload documents.');
+    return;
+  }
+
+  if (!currentUser.is_staff) {
+    setError('Only administrators can upload documents.');
+    return;
+  }
+
     if (!formData.title.trim()) {
       setError('Please enter a title');
       return;
@@ -113,12 +149,17 @@ const UploadDocument = () => {
       setTimeout(() => {
         navigate(`/quiz/${docId}`);
       }, 1500);
-    } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.error || 'Failed to upload document');
-    } finally {
-      setLoading(false);
-    }
+   } catch (err) {
+  console.error(err);
+
+  setError(
+    err.response?.data?.detail ||
+    err.response?.data?.error ||
+    'Failed to upload document'
+  );
+} finally {
+  setLoading(false);
+}
   };
 
   const removeFile = () => {
@@ -242,12 +283,16 @@ const UploadDocument = () => {
           {/* Submit Button */}
           <div className="form-group">
             <button
-              type="submit"
-              disabled={loading}
-              className="btn btn-primary submit-btn"
-            >
-              {loading ? 'Uploading...' : 'Upload Document'}
-            </button>
+  type="submit"
+  disabled={loading || userLoading}
+  className="btn btn-primary submit-btn"
+>
+  {userLoading
+    ? 'Checking Permissions...'
+    : loading
+      ? 'Uploading...'
+      : 'Upload Document'}
+</button>
           </div>
         </form>
       </div>
