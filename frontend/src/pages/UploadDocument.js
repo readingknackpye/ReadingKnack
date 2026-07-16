@@ -109,13 +109,17 @@ const UploadDocument = () => {
       const docId = response.data.id;
       setSuccess('Document uploaded successfully! Redirecting to library...');
 
-      // Redirect to quiz page after a short delay
+      // Redirect to library page after a short delay
       setTimeout(() => {
         navigate('/documents');
       }, 1500);
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.error || 'Failed to upload document');
+      const data = err.response?.data
+      const message = Array.isArray(data)
+        ? data[0]
+        : data?.error || data ?.detail || 'Failed to upload document';
+      setError(message)
     } finally {
       setLoading(false);
     }
@@ -134,7 +138,7 @@ const UploadDocument = () => {
       </div>
 
       {/* Upload Form */}
-      <div className="card">
+      <div className="card" style={{ width: '100%', minWidth: 'min(100%, 500px)', maxWidth: '600px', margin: '0 auto' }}>
         <form onSubmit={handleSubmit}>
           {/* Title Input */}
           <div className="form-group">
@@ -160,6 +164,7 @@ const UploadDocument = () => {
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
               onDrop={handleDrop}
+              style={{ minWidth: 'min(100%, 500px)', minHeight: '160px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
             >
               {formData.file ? (
                 <div className="file-selected">
@@ -174,29 +179,28 @@ const UploadDocument = () => {
                     type="button"
                     onClick={removeFile}
                     className="btn btn-secondary file-remove-btn"
+                    style={{ backgroundColor: '#dc3545', color: 'white' }}
                   >
                     ✕ Remove File
                   </button>
                 </div>
-              ) : (
-                <div className="file-drop-content">
-                  <span className="file-drop-icon">📁</span>
-                  <div>
-                    <p className="file-drop-text">
-                      Drop your .docx file here, or{' '}
-                      <label className="file-browse-link">
-                        browse
-                        <input
-                          type="file"
-                          accept=".docx"
-                          onChange={(e) => handleFileSelect(e.target.files[0])}
-                          className="hidden"
-                        />
-                      </label>
+              ) : (  
+                <label className="file-drop-content" style={{ cursor: 'pointer', display: 'block' }}>
+                  {/* being able to upload files by clicking content box not just label*/}
+                  <input 
+                    type="file" 
+                    accept=".docx" 
+                    onChange={(e) => handleFileSelect(e.target.files[0])} 
+                    className="hidden" 
+                  />
+                  <span className="file-drop-icon">📁</span> 
+                  <div> 
+                    <p className="file-drop-text"> 
+                      Drop your .docx file here, or{' '} 
+                      <span className="file-browse-link">browse</span>
                     </p>
-                    <p className="file-drop-hint">Only .docx files up to 10MB are supported</p>
                   </div>
-                </div>
+                </label>
               )}
             </div>
           </div>

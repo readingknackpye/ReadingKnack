@@ -5,5 +5,4 @@ __pycache__/
 node_modules/
 .env
 db.sqlite3
-.env
-db.sqlite3
+media/

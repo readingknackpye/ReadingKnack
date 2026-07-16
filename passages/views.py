@@ -29,10 +29,10 @@ import json
 from .authentication import CsrfExemptSessionAuthentication
 import os
 from passages.gemini_utils import generate_questions, parse_questions, save_parsed_questions
-import io
-from .pye_parser import parse_pye, extract_paragraphs
 from passages import serializers
 from django.db import transaction
+from .importer import import_document 
+from .pye_parser import PYEParseError
 
 def upload_document(request):
     parsed_content = None
@@ -83,69 +83,30 @@ def uploaded_documents_list(request):
     documents = UploadedDocument.objects.all()
     return render(request, 'passages/document_list.html', {'documents': documents})
 
-
-from rest_framework.exceptions import ValidationError
-
 class UploadedDocumentViewSet(viewsets.ModelViewSet):
     authentication_classes = [CsrfExemptSessionAuthentication]
     queryset = UploadedDocument.objects.all().order_by('-uploaded_at')
     serializer_class = UploadedDocumentSerializer
 
     def perform_create(self, serializer):
-        # handle the user safely when uploading docs
         user = self.request.user if self.request.user.is_authenticated else None
-        
+
         with transaction.atomic():
             instance = serializer.save(uploader=user)
-            
+
             if instance.file and instance.file.name.endswith('.docx'):
                 try:
-                    print(f"Running Intern's PYE Parser on {instance.file.name}")
-                    
-                    # import the tools from the parser directly
-                    from .pye_parser import parse_pye, extract_paragraphs, validate, PYEParseError
-                    import io
-                    
-                    # read the file in memory safely
-                    with instance.file.open('rb') as fh:
-                        data = fh.read()
-                        
-                    # parse the paragraph safely and validate the structure
-                    parsed = parse_pye(extract_paragraphs(io.BytesIO(data)))
-                    problems = validate(parsed)
-                    
-                    if problems:
-                        # if there is a formatting error in the doc raise an error
-                        raise PYEParseError("; ".join(problems))
-                        
-                    # save the parsed text
-                    instance.parsed_text = parsed.passage
-                    instance.save(update_fields=['parsed_text'])
-                    
-                    # save the questions and answers
-                    for q in parsed.questions:
-                        question = QuizQuestion.objects.create(
-                            document=instance,
-                            question_text=q.text,
-                            explanation=q.explanation,
-                        )
-                        for c in q.choices:
-                            QuizAnswer.objects.create(
-                                question=question,
-                                choice_letter=c.letter,
-                                choice_text=c.text,
-                                is_correct=c.is_correct,
-                            )
-                            
-                    print(f"Successfully parsed and saved {len(parsed.questions)} questions.")
-
+                    print(f"Running PYE Parser on {instance.file.name}")
+                    import_document(instance)  # parse, validate, and save in one call
+                    print("Successfully parsed and saved document data.")
+                except PYEParseError as e:
+                    print(f"Parser validation failed: {e}")
+                    raise ValidationError(f"Document Error: {str(e)}")
                 except Exception as e:
-                    # catch errors and raise them so the frontend can see them
-                    print(f"Parser integration failed: {str(e)}")
+                    print(f"Unexpected parser error: {e}")
                     import traceback
                     traceback.print_exc()
                     raise ValidationError(f"Document Error: {str(e)}")
-
 
 class DocumentDetailView(APIView):
     def get(self, request, pk):
