@@ -18,6 +18,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action as drf_action
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
+from rest_framework.exceptions import ValidationError
 from .serializers import (
     UploadedDocumentSerializer, QuizQuestionSerializer, QuizAnswerSerializer,
     QuizResponseSerializer, DocumentDetailSerializer, GradeLevelSerializer, 
@@ -30,6 +31,8 @@ import os
 from passages.gemini_utils import generate_questions, parse_questions, save_parsed_questions
 import io
 from .pye_parser import parse_pye, extract_paragraphs
+from passages import serializers
+from django.db import transaction
 
 
 # def passage_list(request):
@@ -87,44 +90,68 @@ def uploaded_documents_list(request):
     return render(request, 'passages/document_list.html', {'documents': documents})
 
 
+from rest_framework.exceptions import ValidationError
+
 class UploadedDocumentViewSet(viewsets.ModelViewSet):
     authentication_classes = [CsrfExemptSessionAuthentication]
     queryset = UploadedDocument.objects.all().order_by('-uploaded_at')
     serializer_class = UploadedDocumentSerializer
 
     def perform_create(self, serializer):
-        instance = serializer.save(uploader=self.request.user)
-        if not instance.file.name.endswith('.docx'):
-            return
+        # handle the user safely when uploading docs
+        user = self.request.user if self.request.user.is_authenticated else None
+        
+        with transaction.atomic():
+            instance = serializer.save(uploader=user)
+            
+            if instance.file and instance.file.name.endswith('.docx'):
+                try:
+                    print(f"Running Intern's PYE Parser on {instance.file.name}")
+                    
+                    # import the tools from the parser directly
+                    from .pye_parser import parse_pye, extract_paragraphs, validate, PYEParseError
+                    import io
+                    
+                    # read the file in memory safely
+                    with instance.file.open('rb') as fh:
+                        data = fh.read()
+                        
+                    # parse the paragraph safely and validate the structure
+                    parsed = parse_pye(extract_paragraphs(io.BytesIO(data)))
+                    problems = validate(parsed)
+                    
+                    if problems:
+                        # if there is a formatting error in the doc raise an error
+                        raise PYEParseError("; ".join(problems))
+                        
+                    # save the doc title and parsed text
+                    instance.title = parsed.title
+                    instance.parsed_text = parsed.passage
+                    instance.save(update_fields=['title', 'parsed_text'])
+                    
+                    # save the questions and answers
+                    for q in parsed.questions:
+                        question = QuizQuestion.objects.create(
+                            document=instance,
+                            question_text=q.text,
+                            explanation=q.explanation,
+                        )
+                        for c in q.choices:
+                            QuizAnswer.objects.create(
+                                question=question,
+                                choice_letter=c.letter,
+                                choice_text=c.text,
+                                is_correct=c.is_correct,
+                            )
+                            
+                    print(f"Successfully parsed and saved {len(parsed.questions)} questions.")
 
-        # Read the uploaded .docx safely into memory
-        with instance.file.open('rb') as fh:
-            data = fh.read()
-
-        # Parse the PYE format: passage + questions + choices + answer key
-        parsed = parse_pye(extract_paragraphs(io.BytesIO(data)))
-        print(f"PARSED {len(parsed.questions)} questions from '{instance.title}'")
-
-        # Save the reading passage onto the document
-        instance.parsed_text = parsed.passage
-        instance.save(update_fields=['parsed_text'])
-
-        # Create the quiz questions, choices, and explanations
-        for q in parsed.questions:
-            question = QuizQuestion.objects.create(
-                document=instance,
-                question_text=q.text,
-                explanation=q.explanation,
-            )
-            for c in q.choices:
-                QuizAnswer.objects.create(
-                    question=question,
-                    choice_letter=c.letter,
-                    choice_text=c.text,
-                    is_correct=c.is_correct,
-                )
-
-    # Removed detail action due to decorator conflicts
+                except Exception as e:
+                    # catch errors and raise them so the frontend can see them
+                    print(f"Parser integration failed: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
+                    raise ValidationError(f"Document Error: {str(e)}")
 
 
 class DocumentDetailView(APIView):
