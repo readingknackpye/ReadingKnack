@@ -292,7 +292,7 @@ const Quiz = () => {
             onClick={() => navigate(`/documents/${documentId}`)}
             className="submit-button"
           >
-            Back to Passage
+            Back to Documents
           </button>
         </div>
       </div>
@@ -345,20 +345,34 @@ const Quiz = () => {
             </div>
           </div>
 
-          {/* Submit Button */}
-          <button
-            onClick={() => {
-              if (currentQuestion < questions.length - 1) {
-                setCurrentQuestion(prev => prev + 1);
-              } else {
-                handleSubmit();
-              }
-            }}
-            disabled={submitting}
-            className="submit-button"
-          >
-            {submitting ? 'Submitting...' : currentQuestion < questions.length - 1 ? 'Next Question' : 'Submit Quiz'}
-          </button>
+          {/* Navigation Buttons */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1.5rem', gap: '1rem' }}>
+            <button
+              onClick={() => setCurrentQuestion(prev => prev - 1)}
+              disabled={currentQuestion === 0 || submitting}
+              className="px-6 py-3 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 transition-colors"
+              // Added flex: 1 to make it take exactly 50% of the space
+              style={{ opacity: currentQuestion === 0 ? 0.3 : 1, cursor: currentQuestion === 0 ? 'not-allowed' : 'pointer', flex: 1 }}
+            >
+              Previous Question
+            </button>
+
+            <button
+              onClick={() => {
+                if (currentQuestion < questions.length - 1) {
+                  setCurrentQuestion(prev => prev + 1);
+                } else {
+                  handleSubmit();
+                }
+              }}
+              disabled={!answers[currentQ.id] || submitting}
+              className="submit-button"
+              // Added flex: 1 and margin: 0 to override the 100% width and top margin from your CSS file
+              style={{ opacity: (!answers[currentQ.id] || submitting) ? 0.5 : 1, cursor: (!answers[currentQ.id] || submitting) ? 'not-allowed' : 'pointer', flex: 1, margin: 0 }}
+            >
+              {submitting ? 'Submitting...' : currentQuestion < questions.length - 1 ? 'Next Question' : 'Submit Quiz'}
+            </button>
+          </div>
         </div>
       </div>
 

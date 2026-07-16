@@ -34,12 +34,6 @@ from .pye_parser import parse_pye, extract_paragraphs
 from passages import serializers
 from django.db import transaction
 
-
-# def passage_list(request):
-#     passages = Passage.objects.all()
-#     return render(request, 'passages/passage_list.html', {'passages': passages})
-
-
 def upload_document(request):
     parsed_content = None
 
@@ -124,10 +118,9 @@ class UploadedDocumentViewSet(viewsets.ModelViewSet):
                         # if there is a formatting error in the doc raise an error
                         raise PYEParseError("; ".join(problems))
                         
-                    # save the doc title and parsed text
-                    instance.title = parsed.title
+                    # save the parsed text
                     instance.parsed_text = parsed.passage
-                    instance.save(update_fields=['title', 'parsed_text'])
+                    instance.save(update_fields=['parsed_text'])
                     
                     # save the questions and answers
                     for q in parsed.questions:

@@ -107,11 +107,11 @@ const UploadDocument = () => {
       // Step 1: Upload the document
       const response = await documentsAPI.upload(uploadData);
       const docId = response.data.id;
-      setSuccess('Document uploaded successfully! Redirecting to quiz...');
+      setSuccess('Document uploaded successfully! Redirecting to library...');
 
       // Redirect to quiz page after a short delay
       setTimeout(() => {
-        navigate(`/quiz/${docId}`);
+        navigate('/documents');
       }, 1500);
     } catch (err) {
       console.error(err);
