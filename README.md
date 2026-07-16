@@ -34,7 +34,7 @@ A full-stack web application for uploading, reading, and quizzing over reading p
 
 ### Prerequisites
 
-- Python 3.8+
+- Python 3.12 (required — newer versions like 3.13/3.14 aren't yet supported by all dependencies)
 - Node.js 16+
 - npm or yarn
 
@@ -43,15 +43,15 @@ A full-stack web application for uploading, reading, and quizzing over reading p
 1. **Clone the repository**
 
    ```bash
-   git clone <repository-url>
-   cd readingknack-backend
+   git clone https://github.com/readingknackpye/ReadingKnack
+   cd ReadingKnack
    ```
 
 2. **Create and activate virtual environment**
 
    ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   python3.12 -m venv .venv       # On Windows: py -3.12 -m venv .venv
+   source .venv/bin/activate      # On Windows: .venv\Scripts\activate
    ```
 
 3. **Install dependencies**
@@ -79,11 +79,22 @@ A full-stack web application for uploading, reading, and quizzing over reading p
    ```
 
 7. **Start the development server**
+  
    ```bash
    python3 manage.py runserver
    ```
 
 The Django backend will be available at `http://localhost:8000`
+
+### Available Pages
+
+Once the backend is running, these are available in your browser:
+
+- `http://localhost:8000/admin/` — Django admin panel (log in with your superuser)
+- `http://localhost:8000/login/` — Login page
+- `http://localhost:8000/signup/` — Sign-up page
+- `http://localhost:8000/upload/` — Document upload page
+- `http://localhost:8000/api/` — Browsable REST API root
 
 ### Frontend Setup
 
@@ -270,3 +281,4 @@ If you have any questions or need help:
 ---
 
 **Built with ❤️ for better reading comprehension**
+​

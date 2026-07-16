@@ -85,9 +85,16 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     "default": dj_database_url.config(
         env="DATABASE_URL",
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=600,
     )
 }
+
+# only use ssl if using postgresql to avoid errors weth sqLite
+if DATABASES["default"].get("ENGINE", "").endswith("postgresql"):
+    DATABASES["default"].setdefault("OPTIONS", {})["sslmode"] = "require"
+else:
+    DATABASES["default"].pop("OPTIONS", None)
 
 
 # Password validation
