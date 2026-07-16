@@ -18,7 +18,6 @@ from rest_framework.response import Response
 from rest_framework.decorators import action as drf_action
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
-from rest_framework import serializers
 from .serializers import (
     UploadedDocumentSerializer, QuizQuestionSerializer, QuizAnswerSerializer,
     QuizResponseSerializer, DocumentDetailSerializer, GradeLevelSerializer, 
@@ -28,47 +27,52 @@ from django.http import JsonResponse
 import json
 from .authentication import CsrfExemptSessionAuthentication
 import os
-# from passages.gemini_utils import generate_questions, parse_questions, save_parsed_questions
-from .document_parser import parse_pye_document
-import traceback
-from django.db import transaction
+from passages.gemini_utils import generate_questions, parse_questions, save_parsed_questions
+import io
+from .pye_parser import parse_pye, extract_paragraphs
 
-# def upload_document(request):
-#     parsed_content = None
 
-#     if request.method == 'POST':
-#         form = UploadedDocumentForm(request.POST, request.FILES)
-#         if form.is_valid():
-#             uploaded_doc = form.save()
+# def passage_list(request):
+#     passages = Passage.objects.all()
+#     return render(request, 'passages/passage_list.html', {'passages': passages})
 
-#             doc = Document(uploaded_doc.file)
-#             parsed_content = "\n".join([p.text for p in doc.paragraphs])
-#             uploaded_doc.parsed_text = parsed_content
 
-#             try:
-#                 print("Generating quiz questions with Gemini...")
-#                 questions_text = generate_questions(parsed_content[:3000])
-#                 print("Raw Gemini output:\n", questions_text)
+def upload_document(request):
+    parsed_content = None
 
-#                 parsed_questions = parse_questions(questions_text)
-#                 print("Parsed questions list:\n", parsed_questions)
+    if request.method == 'POST':
+        form = UploadedDocumentForm(request.POST, request.FILES)
+        if form.is_valid():
+            uploaded_doc = form.save()
 
-#                 save_parsed_questions(uploaded_doc, parsed_questions)
-#                 print("Quiz Questions saved to DB.")
+            doc = Document(uploaded_doc.file)
+            parsed_content = "\n".join([p.text for p in doc.paragraphs])
+            uploaded_doc.parsed_text = parsed_content
 
-#             except Exception as e:
-#                 print("Quiz generation failed:", str(e))
+            try:
+                print("Generating quiz questions with Gemini...")
+                questions_text = generate_questions(parsed_content[:3000])
+                print("Raw Gemini output:\n", questions_text)
 
-#             uploaded_doc.save()
+                parsed_questions = parse_questions(questions_text)
+                print("Parsed questions list:\n", parsed_questions)
 
-#             return render(request, 'passages/upload_success.html', {
-#                 'document': uploaded_doc,
-#                 'parsed_content': parsed_content
-#             })
-#     else:
-#         form = UploadedDocumentForm()
+                save_parsed_questions(uploaded_doc, parsed_questions)
+                print("Quiz Questions saved to DB.")
 
-#     return render(request, 'passages/upload_form.html', {'form': form})
+            except Exception as e:
+                print("Quiz generation failed:", str(e))
+
+            uploaded_doc.save()
+
+            return render(request, 'passages/upload_success.html', {
+                'document': uploaded_doc,
+                'parsed_content': parsed_content
+            })
+    else:
+        form = UploadedDocumentForm()
+
+    return render(request, 'passages/upload_form.html', {'form': form})
 
 
 def clean_file(self):
@@ -89,48 +93,39 @@ class UploadedDocumentViewSet(viewsets.ModelViewSet):
     serializer_class = UploadedDocumentSerializer
 
     def perform_create(self, serializer):
-            # need to fix whether logged in users and anonymous both can upload docs
-            user = self.request.user if self.request.user.is_authenticated else None
-            
-            try:
-                with transaction.atomic():
-                    instance = serializer.save(uploader=user)
-                    
-                    if instance.file and instance.file.name.endswith('.docx'):
-                        print(f"Running PYE Parser on {instance.file.name}")
-                        from .document_parser import parse_pye_document
-                        
-                        # 3. If parsing fails, this will raise an exception and trigger the rollback
-                        parsed_data = parse_pye_document(instance.file)
-                        
-                        instance.title = parsed_data["title"]
-                        instance.parsed_text = "\n\n".join(parsed_data["passage_paragraphs"])
-                        instance.save()
+        instance = serializer.save(uploader=self.request.user)
+        if not instance.file.name.endswith('.docx'):
+            return
 
-                        for q_data in parsed_data["questions"]:
-                            new_question = QuizQuestion.objects.create(
-                                document=instance,
-                                question_text=q_data["question_text"],
-                                explanation=q_data["explanation"]
-                            )
-                            
-                            for letter, choice_text in q_data["choices"].items():
-                                QuizAnswer.objects.create(
-                                    question=new_question,
-                                    choice_letter=letter,
-                                    choice_text=choice_text,
-                                    is_correct=(letter == q_data["correct_choice"])
-                                )
-                        print("Successfully parsed and saved all document data.")
-        
-            except Exception as e:
-                # the database automatically rolls back everything inside the 'with' block
-                print(f"Parser integration failed: {str(e)}")
-                import traceback
-                traceback.print_exc()
-                
-                # instead of silently failing and pretending the upload was successful, re-raise error to frontend with error code
-                raise serializers.ValidationError(f"File upload failed during parsing: {str(e)}")
+        # Read the uploaded .docx safely into memory
+        with instance.file.open('rb') as fh:
+            data = fh.read()
+
+        # Parse the PYE format: passage + questions + choices + answer key
+        parsed = parse_pye(extract_paragraphs(io.BytesIO(data)))
+        print(f"PARSED {len(parsed.questions)} questions from '{instance.title}'")
+
+        # Save the reading passage onto the document
+        instance.parsed_text = parsed.passage
+        instance.save(update_fields=['parsed_text'])
+
+        # Create the quiz questions, choices, and explanations
+        for q in parsed.questions:
+            question = QuizQuestion.objects.create(
+                document=instance,
+                question_text=q.text,
+                explanation=q.explanation,
+            )
+            for c in q.choices:
+                QuizAnswer.objects.create(
+                    question=question,
+                    choice_letter=c.letter,
+                    choice_text=c.text,
+                    is_correct=c.is_correct,
+                )
+
+    # Removed detail action due to decorator conflicts
+
 
 class DocumentDetailView(APIView):
     def get(self, request, pk):
@@ -240,20 +235,20 @@ class SkillCategoryViewSet(viewsets.ModelViewSet):
     serializer_class = SkillCategorySerializer
 
 
-# def generate_questions_for_document(request, document_id):
-#     # Get the UploadedDocument object by ID
-#     document = get_object_or_404(UploadedDocument, id=document_id)
+def generate_questions_for_document(request, document_id):
+    # Get the UploadedDocument object by ID
+    document = get_object_or_404(UploadedDocument, id=document_id)
 
-#     # Use the parsed text stored in the document (make sure you saved it on upload)
-#     parsed_text = document.parsed_text
+    # Use the parsed text stored in the document (make sure you saved it on upload)
+    parsed_text = document.parsed_text
 
-#     if not parsed_text:
-#         return JsonResponse({'error': 'No parsed text found in document.'}, status=400)
+    if not parsed_text:
+        return JsonResponse({'error': 'No parsed text found in document.'}, status=400)
 
-#     # Generate questions from the parsed text
-#     questions = generate_questions(parsed_text)
+    # Generate questions from the parsed text
+    questions = generate_questions(parsed_text)
 
-#     return JsonResponse({'questions': questions})
+    return JsonResponse({'questions': questions})
 
 
 class UserRegistrationView(APIView):
