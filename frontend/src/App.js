@@ -5,7 +5,6 @@ import Home from './pages/Home';
 import Upload from './pages/UploadDocument';
 import DocumentsList from './pages/DocumentList';
 import Quiz from './pages/Quiz';
-import Results from './pages/Results';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Profile from './pages/Profile';
