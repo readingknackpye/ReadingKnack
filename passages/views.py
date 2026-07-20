@@ -28,6 +28,7 @@ from django.http import JsonResponse
 import json
 from .authentication import CsrfExemptSessionAuthentication
 import os
+from .docx_parser import parse_uploaded_docx
 from passages.gemini_utils import generate_questions, parse_questions, save_parsed_questions
 from passages import serializers
 from django.db import transaction
