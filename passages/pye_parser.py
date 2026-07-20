@@ -52,7 +52,7 @@ QUESTION_RE = re.compile(r"^(\d+)\s*[.)]\s*(.+)$", re.S)
 # "A. choice" / "A) choice" / "A.choice" (spacing is inconsistent in PYE docs)
 CHOICE_RE = re.compile(r'^([A-D])\s*[.)]\s*["\u201c\u201d]?\s*(.+)$', re.S)
 # answer-key line: "A (explanation ...)"  -- letter, then explanation in parens
-KEY_RE = re.compile(r'^([A-D])\s*\((.*)\)\s*$', re.S)
+KEY_RE = re.compile(r'^(?:\d+[.)]\s*)?([A-D])\s*\((.*)\)\s*$', re.S)
 # fallback: bare "A" with no explanation
 KEY_BARE_RE = re.compile(r"^([A-D])\s*$")
 
