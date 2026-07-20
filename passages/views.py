@@ -92,7 +92,8 @@ class UploadedDocumentViewSet(viewsets.ModelViewSet):
     serializer_class = UploadedDocumentSerializer
 
     def perform_create(self, serializer):
-        instance = serializer.save(uploader=self.request.user)
+        uploader = self.request.user if self.request.user.is_authenticated else None
+        instance = serializer.save(uploader=uploader)
         # Parse .docx file
         if instance.file.name.lower().endswith('.docx'):
             parsed_doc = parse_uploaded_docx(instance.file)
@@ -107,17 +108,17 @@ class UploadedDocumentViewSet(viewsets.ModelViewSet):
             parsed_text = instance.parsed_text[:3000]  # Limit to 3K chars
             print("Generating quiz questions with Gemini...")
 
-            print("📄 Uploaded document:", instance.title)
-            print("📄 Parsed text snippet:", instance.parsed_text[:300] if instance.parsed_text else "NO TEXT")
+            print("Uploaded document:", instance.title)
+            print("Parsed text snippet:", instance.parsed_text[:300] if instance.parsed_text else "NO TEXT")
 
             questions_text = generate_questions(parsed_text)
-            print("🤖 Raw Gemini output:\n", questions_text)
+            print("Raw Gemini output:\n", questions_text)
 
             parsed_questions = parse_questions(questions_text)
-            print("🔍 Parsed questions list:", parsed_questions)
+            print("Parsed questions list:", parsed_questions)
 
             save_parsed_questions(instance, parsed_questions)
-            print("💾 Questions saved to DB.")
+            print("Questions saved to DB.")
 
         except Exception as e:
             print("Quiz generation failed:", str(e))
@@ -509,45 +510,6 @@ def clean_file(self):
 def uploaded_documents_list(request):
     documents = UploadedDocument.objects.all()
     return render(request, 'passages/document_list.html', {'documents': documents})
-
-
-class UploadedDocumentViewSet(viewsets.ModelViewSet):
-    authentication_classes = [CsrfExemptSessionAuthentication]
-    queryset = UploadedDocument.objects.all().order_by('-uploaded_at')
-    serializer_class = UploadedDocumentSerializer
-
-    def perform_create(self, serializer):
-        instance = serializer.save(uploader=self.request.user)
-        # Parse .docx file
-        if instance.file.name.endswith('.docx'):
-            doc = Document(instance.file)
-            full_text = [para.text for para in doc.paragraphs]
-            instance.parsed_text = '\n'.join(full_text)
-            # Save the parsed text first
-            instance.save()
-
-        try:
-            parsed_text = instance.parsed_text[:3000]  # Limit to 3K chars
-            print("Generating quiz questions with Gemini...")
-
-            print("📄 Uploaded document:", instance.title)
-            print("📄 Parsed text snippet:", instance.parsed_text[:300] if instance.parsed_text else "NO TEXT")
-
-            questions_text = generate_questions(parsed_text)
-            print("🤖 Raw Gemini output:\n", questions_text)
-
-            parsed_questions = parse_questions(questions_text)
-            print("🔍 Parsed questions list:", parsed_questions)
-
-            save_parsed_questions(instance, parsed_questions)
-            print("💾 Questions saved to DB.")
-
-        except Exception as e:
-            print("Quiz generation failed:", str(e))
-            import traceback
-            traceback.print_exc()
-
-    # Removed detail action due to decorator conflicts
 
 
 class DocumentDetailView(APIView):

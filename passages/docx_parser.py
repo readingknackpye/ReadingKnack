@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Iterable
 
-from docx import Document
+from docx import Document # the library that actually opens .docx files 
 from docx.document import Document as DocxDocument
 from docx.table import Table
 from docx.text.paragraph import Paragraph
@@ -14,7 +14,17 @@ QUESTION_START_RE = re.compile(r'^(?:Q(?:uestion)?\s*)?(\d+)[\).:-]\s*(.+)$', re
 OPTION_RE = re.compile(r'^(?:[-*•]\s*)?([A-D])[\).:-]\s*(.+)$', re.IGNORECASE)
 ANSWER_RE = re.compile(r'^(?:Answer|Correct Answer|Correct)\s*[:\-]\s*([A-D])\b', re.IGNORECASE)
 EXPLANATION_RE = re.compile(r'^(?:Explanation|Reason|Rationale)\s*[:\-]\s*(.+)$', re.IGNORECASE)
-HEADING_RE = re.compile(r'^(?:Passage|Reading Passage|Questions?|Comprehension Questions)\s*[:\-]?\s*$', re.IGNORECASE)
+HEADING_RE = re.compile(
+    r'^(?:Passage|Reading Passage|Comprehension Questions|Questions?(?:\s+to\s+Answer)?)\s*[:\-]?\s*$',
+    re.IGNORECASE,
+)
+
+# PYE-format documents list the correct answers separately at the end of the
+# document, under an "Answer Key" heading, as one paragraph per question in
+# question order: "<LETTER> (<explanation text>)" -- with no "Answer:" or
+# "Explanation:" labels tying each entry back to its question number.
+ANSWER_KEY_HEADING_RE = re.compile(r'^Answer\s*Key\b', re.IGNORECASE)
+ANSWER_KEY_ENTRY_RE = re.compile(r'^(?:\d+[\).:-]\s*)?([A-D])\b[\).:-]?\s*(.*)$', re.IGNORECASE)
 
 
 @dataclass
@@ -86,6 +96,15 @@ def _append_answer(answers: list[dict], letter: str, text: str) -> None:
     })
 
 
+def _strip_enclosing_parens(text: str) -> str:
+    text = text.strip()
+    if text.startswith('(') and text.endswith(')'):
+        return text[1:-1].strip()
+    if text.startswith('('):
+        return text[1:].strip()
+    return text
+
+
 def parse_document(document: DocxDocument) -> ParsedDocument:
     """Parse a DOCX document into passage text and quiz question data."""
 
@@ -95,6 +114,8 @@ def parse_document(document: DocxDocument) -> ParsedDocument:
     current_question: dict | None = None
     seen_question_section = False
     explanation_mode = False
+    answer_key_mode = False
+    answer_key_index = 0
 
     def flush_question() -> None:
         nonlocal current_question, explanation_mode
@@ -105,7 +126,35 @@ def parse_document(document: DocxDocument) -> ParsedDocument:
         current_question = None
         explanation_mode = False
 
+    def apply_answer_key_entry(letter: str, explanation_text: str) -> None:
+        nonlocal answer_key_index
+        if answer_key_index >= len(questions):
+            return
+        question = questions[answer_key_index]
+        question['correct_choice'] = letter
+        explanation_text = _strip_enclosing_parens(explanation_text)
+        if explanation_text:
+            question['explanation'] = _clean_text(explanation_text)
+        for answer in question['answers']:
+            answer['is_correct'] = answer['choice_letter'] == letter
+        answer_key_index += 1
+
     for line in lines:
+        if answer_key_mode:
+            entry_match = ANSWER_KEY_ENTRY_RE.match(line)
+            if entry_match:
+                apply_answer_key_entry(entry_match.group(1).upper(), entry_match.group(2))
+            elif 0 < answer_key_index <= len(questions):
+                # Continuation of a wrapped explanation from the previous entry.
+                previous_question = questions[answer_key_index - 1]
+                previous_question['explanation'] = f"{previous_question['explanation']} {line}".strip()
+            continue
+
+        if ANSWER_KEY_HEADING_RE.match(line):
+            flush_question()
+            answer_key_mode = True
+            continue
+
         if HEADING_RE.match(line):
             if current_question and current_question['answers']:
                 flush_question()
@@ -175,12 +224,11 @@ def parse_document(document: DocxDocument) -> ParsedDocument:
     return ParsedDocument(parsed_text=parsed_text, questions=questions, raw_lines=lines)
 
 
-def parse_uploaded_docx(file_obj) -> ParsedDocument:
+def parse_uploaded_docx(file_obj) -> ParsedDocument: #import the file step
     """Open a DOCX file-like object and parse it."""
 
     if hasattr(file_obj, 'seek'):
         file_obj.seek(0)
 
     document = Document(file_obj)
-    return parse_document(document)
     return parse_document(document)

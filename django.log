@@ -1,0 +1,19 @@
+DEBUG: USE_S3 = False
+DEBUG: AWS_ACCESS_KEY_ID = NOT_SET...
+DEBUG: AWS_STORAGE_BUCKET_NAME = NOT_SET
+DEBUG: AWS_S3_ENDPOINT_URL = NOT_SET
+DEBUG: Using local storage...
+DEBUG: USE_S3 = False
+DEBUG: AWS_ACCESS_KEY_ID = NOT_SET...
+DEBUG: AWS_STORAGE_BUCKET_NAME = NOT_SET
+DEBUG: AWS_S3_ENDPOINT_URL = NOT_SET
+DEBUG: Using local storage...
+Watching for file changes with StatReloader
+Performing system checks...
+
+System check identified no issues (0 silenced).
+July 20, 2026 - 14:12:44
+Django version 4.2.22, using settings 'config.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CTRL-BREAK.
+
