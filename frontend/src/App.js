@@ -9,7 +9,6 @@ import Results from './pages/Results';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Profile from './pages/Profile';
-import Results from './pages/Results';
 import Navbar from './components/Navbar';
 import UploadDocument from './pages/UploadDocument';
 import ReviewDocument from './pages/ReviewDocument';
