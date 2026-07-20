@@ -30,6 +30,7 @@ B) Second choice text
 C) Third choice text
 D) Fourth choice text
 Answer: C
+Explanation: short explanation of why C is correct
 
 **2. Next question here?**
 A) Choice A text
@@ -37,6 +38,7 @@ B) Choice B text
 C) Choice C text
 D) Choice D text
 Answer: B
+Explanation: short explanation of why B is correct
 
 (Continue for all 7 questions)
 
@@ -71,7 +73,8 @@ def parse_questions(raw_text):
     # Detect lines like "**1. What is X?**"
     question_pattern = re.compile(r'^\*\*\d+\.\s*(.+?)\*\*')
     choice_pattern = re.compile(r'^[A-D]\)\s*(.+)')
-    answer_pattern = re.compile(r'^Answer:\s*([A-D])')
+    answer_pattern = re.compile(r'^Answer:\s*([A-D])', re.IGNORECASE)
+    explanation_pattern = re.compile(r'^(?:Explanation|Reason|Rationale):\s*(.+)$', re.IGNORECASE)
 
     for line in raw_text.splitlines():
         line = line.strip()
@@ -81,7 +84,7 @@ def parse_questions(raw_text):
         if question_pattern.match(line):
             if current_question:
                 questions.append(current_question)
-            current_question = {"question_text": "", "answers": [], "correct_choice": None}
+            current_question = {"question_text": "", "answers": [], "correct_choice": None, "explanation": ""}
             current_question["question_text"] = question_pattern.match(line).group(1).strip()
         elif choice_pattern.match(line) and current_question:
             choice_text = choice_pattern.match(line).group(1).strip()
@@ -101,9 +104,14 @@ def parse_questions(raw_text):
                     "is_correct": False
                 })
         elif answer_pattern.match(line) and current_question:
-            correct_letter = answer_pattern.match(line).group(1)
+            correct_letter = answer_pattern.match(line).group(1).upper()
+            current_question["correct_choice"] = correct_letter
             for ans in current_question["answers"]:
                 ans["is_correct"] = (ans["choice_letter"] == correct_letter)
+        elif explanation_pattern.match(line) and current_question:
+            current_question["explanation"] = explanation_pattern.match(line).group(1).strip()
+        elif current_question and current_question.get("explanation") and not line.startswith("**"):
+            current_question["explanation"] = f"{current_question['explanation']} {line}".strip()
 
     if current_question:
         questions.append(current_question)
@@ -128,21 +136,27 @@ def save_parsed_questions(document, parsed_questions):
         with transaction.atomic():
             for q in parsed_questions:
                 print(f"📝 Creating question: {q['question_text'][:50]}...")
+
+                correct_choice = q.get("correct_choice")
+                explanation = q.get("explanation", "")
                 
                 new_question = QuizQuestion.objects.create(
                     document=document,
                     question_text=q["question_text"],
-                    explanation=""  # or fill if you get explanation
+                    explanation=explanation
                 )
                 
                 print(f"✅ Question created with ID: {new_question.id}")
                 
                 for ans in q["answers"]:
+                    is_correct = ans.get("is_correct", False)
+                    if correct_choice:
+                        is_correct = is_correct or ans["choice_letter"] == correct_choice
                     QuizAnswer.objects.create(
                         question=new_question,
                         choice_letter=ans["choice_letter"],
                         choice_text=ans["choice_text"],
-                        is_correct=ans["is_correct"]
+                        is_correct=is_correct
                     )
                     print(f"   📍 Answer {ans['choice_letter']}: {ans['choice_text'][:30]}...")
                 
