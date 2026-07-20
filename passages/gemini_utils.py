@@ -53,9 +53,9 @@ Passage:
             response = model.generate_content(prompt)
             return response.text
         except Exception as e:
-            print(f"⚠️ Error with {model_name}: {e}")
-    
-    return "❌ Failed to generate questions."
+            print(f"Error with {model_name}: {e}")
+
+    return "Failed to generate questions."
 
 def parse_questions(raw_text):
     """
@@ -131,23 +131,23 @@ def save_parsed_questions(document, parsed_questions):
         bool: True if successful, False otherwise
     """
     try:
-        print(f"🔄 Attempting to save {len(parsed_questions)} questions to database...")
-        
+        print(f"Attempting to save {len(parsed_questions)} questions to database...")
+
         with transaction.atomic():
             for q in parsed_questions:
-                print(f"📝 Creating question: {q['question_text'][:50]}...")
+                print(f"Creating question: {q['question_text'][:50]}...")
 
                 correct_choice = q.get("correct_choice")
                 explanation = q.get("explanation", "")
-                
+
                 new_question = QuizQuestion.objects.create(
                     document=document,
                     question_text=q["question_text"],
                     explanation=explanation
                 )
-                
-                print(f"✅ Question created with ID: {new_question.id}")
-                
+
+                print(f"Question created with ID: {new_question.id}")
+
                 for ans in q["answers"]:
                     is_correct = ans.get("is_correct", False)
                     if correct_choice:
@@ -158,16 +158,16 @@ def save_parsed_questions(document, parsed_questions):
                         choice_text=ans["choice_text"],
                         is_correct=is_correct
                     )
-                    print(f"   📍 Answer {ans['choice_letter']}: {ans['choice_text'][:30]}...")
-                
-                print(f"✅ All answers saved for question {new_question.id}")
-        
-        print(f"🎉 Successfully saved {len(parsed_questions)} questions with all answers!")
+                    print(f"   Answer {ans['choice_letter']}: {ans['choice_text'][:30]}...")
+
+                print(f"All answers saved for question {new_question.id}")
+
+        print(f"Successfully saved {len(parsed_questions)} questions with all answers!")
         return True
-        
+
     except Exception as e:
-        print(f"❌ Error saving questions to database: {str(e)}")
-        print(f"❌ Error type: {type(e).__name__}")
+        print(f"Error saving questions to database: {str(e)}")
+        print(f"Error type: {type(e).__name__}")
         import traceback
         traceback.print_exc()
         return False

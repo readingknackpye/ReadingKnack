@@ -186,7 +186,7 @@ import './Quiz.css';
   });
 
   // Navigate to results page with quiz data
-  navigate('/profile', {
+  navigate('/results', {
   state: {
   quizResult: response.data,
   document: document,
