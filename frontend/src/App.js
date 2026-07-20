@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import Upload from './pages/UploadDocument';
 import DocumentsList from './pages/DocumentList';
 import Quiz from './pages/Quiz';
+import Results from './pages/Results';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Profile from './pages/Profile';
@@ -22,6 +23,7 @@ function App() {
         <Route path="/upload" element={<UploadDocument />} />
         <Route path="/documents" element={<DocumentsList />} />
         <Route path="/quiz/:documentId" element={<Quiz />} />
+        <Route path="/results" element={<Results />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/profile" element={<Profile />} />

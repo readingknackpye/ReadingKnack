@@ -43,6 +43,51 @@ class DocxParserTests(TestCase):
         self.assertEqual(parsed.questions[0]['explanation'], 'The passage says the fox ran through the forest.')
         self.assertEqual([a['choice_letter'] for a in parsed.questions[0]['answers']], ['A', 'B', 'C', 'D'])
 
+    def test_parse_uploaded_docx_handles_pye_answer_key_section(self):
+        # PYE-format worksheets put the passage title first, then the passage,
+        # then a "Questions to Answer" heading, numbered questions with
+        # unspaced "A." choices, and finally a separate answer key section
+        # where each entry is "<letter> (<explanation>)" with no per-question
+        # "Answer:"/"Explanation:" labels -- matched to questions by order.
+        path = self._build_docx([
+            'Sample Passage Title',
+            'The fox ran through the forest. The forest was quiet and dark.',
+            'Questions to Answer',
+            '1. Where did the fox run?',
+            'A.Through the forest',
+            'B.Into the river',
+            'C.Into the cave',
+            'D.Across the field',
+            '2. What time of day was it?',
+            'A.Morning',
+            'B.Night',
+            'C.Noon',
+            'D.Dusk',
+            'Answer Key with Explanations:',
+            'A (The passage says the fox ran through the forest.)',
+            'B (The passage says the forest was dark, implying night.)',
+        ])
+
+        parsed = parse_uploaded_docx(path)
+
+        self.assertEqual(
+            parsed.parsed_text,
+            'Sample Passage Title\nThe fox ran through the forest. The forest was quiet and dark.',
+        )
+        self.assertEqual(len(parsed.questions), 2)
+
+        first, second = parsed.questions
+        self.assertEqual(first['question_text'], 'Where did the fox run?')
+        self.assertEqual(first['correct_choice'], 'A')
+        self.assertEqual(first['explanation'], 'The passage says the fox ran through the forest.')
+        self.assertEqual([a['choice_letter'] for a in first['answers']], ['A', 'B', 'C', 'D'])
+        self.assertEqual([a['is_correct'] for a in first['answers']], [True, False, False, False])
+
+        self.assertEqual(second['question_text'], 'What time of day was it?')
+        self.assertEqual(second['correct_choice'], 'B')
+        self.assertEqual(second['explanation'], 'The passage says the forest was dark, implying night.')
+        self.assertEqual([a['is_correct'] for a in second['answers']], [False, True, False, False])
+
     def test_save_parsed_questions_persists_answers_and_explanation(self):
         grade_level = GradeLevel.objects.create(name='Grade 3')
         skill_category = SkillCategory.objects.create(name='Main Idea')
