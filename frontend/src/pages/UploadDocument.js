@@ -107,11 +107,11 @@ const UploadDocument = () => {
       // Step 1: Upload the document
       const response = await documentsAPI.upload(uploadData);
       const docId = response.data.id;
-      setSuccess('Document uploaded successfully! Redirecting to library...');
+      setSuccess('Document uploaded successfully!');
 
       // Redirect to library page after a short delay
       setTimeout(() => {
-        navigate('/documents');
+        navigate(`/review/${docId}`);
       }, 1500);
     } catch (err) {
       console.error(err);
