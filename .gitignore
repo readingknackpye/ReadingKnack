@@ -2,7 +2,9 @@
 venv/
 __pycache__/
 *.pyc
-node_modules/
-.env
 db.sqlite3
+media/
 .env
+Remove-Item django.log
+Remove-Item frontend/react.log
+*.log

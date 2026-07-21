@@ -19,8 +19,6 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-
-
 /* Header Card */
 .header-card {
   padding: 32px;
@@ -183,6 +181,7 @@
   line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -215,6 +214,7 @@
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -302,6 +302,32 @@
 .btn-secondary:hover {
   background: #e9ecef;
   color: #333;
+  transform: translateY(-2px);
+}
+
+/* Modal Button Styles */
+.btn-danger {
+  background: #ef4444;
+  color: white;
+  border: none;
+}
+
+.btn-danger:hover {
+  background: #dc2626; /* Darker red on hover */
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.btn-cancel {
+  background: #e5e7eb;
+  color: #374151;
+  border: none;
+}
+
+.btn-cancel:hover {
+  background: #d1d5db; /* Darker gray on hover */
+  color: #111827;
   transform: translateY(-2px);
 }
 
