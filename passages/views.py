@@ -28,22 +28,12 @@ from django.http import JsonResponse
 import json
 from .authentication import CsrfExemptSessionAuthentication
 import os
+from .docx_parser import parse_uploaded_docx
 from passages.gemini_utils import generate_questions, parse_questions, save_parsed_questions
-import io
-from .pye_parser import (
-    PYEParseError,
-    SUPPORTED_EXTENSIONS,
-    extract_paragraphs,
-    format_validation_errors,
-    parse_pye,
-    validate,
-)
-
-
-# def passage_list(request):
-#     passages = Passage.objects.all()
-#     return render(request, 'passages/passage_list.html', {'passages': passages})
-
+from passages import serializers
+from django.db import transaction
+from .importer import import_document 
+from .pye_parser import PYEParseError
 
 def upload_document(request):
     parsed_content = None
@@ -94,57 +84,45 @@ def uploaded_documents_list(request):
     documents = UploadedDocument.objects.all()
     return render(request, 'passages/document_list.html', {'documents': documents})
 
-
 class UploadedDocumentViewSet(viewsets.ModelViewSet):
     authentication_classes = [CsrfExemptSessionAuthentication]
     queryset = UploadedDocument.objects.all().order_by('-uploaded_at')
     serializer_class = UploadedDocumentSerializer
+    
+    def create(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return Response(
+                {"detail": "You must be logged in to upload documents."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        if not request.user.is_staff:
+            return Response(
+                {"detail": "Only administrators can upload documents."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
-        uploader = self.request.user if self.request.user.is_authenticated else None
-        instance = serializer.save(uploader=uploader)
-        file_extension = os.path.splitext(instance.file.name)[1].lower()
-        if file_extension not in SUPPORTED_EXTENSIONS:
-            instance.delete()
-            supported = ", ".join(sorted(SUPPORTED_EXTENSIONS))
-            raise ValidationError({"file": f"Unsupported file type. Please upload one of: {supported}."})
+        user = self.request.user if self.request.user.is_authenticated else None
 
-        # Read the uploaded document safely into memory
-        with instance.file.open('rb') as fh:
-            data = fh.read()
+        with transaction.atomic():
+            instance = serializer.save(uploader=user)
 
-        # Parse the PYE format: passage + questions + choices + answer key
-        try:
-            parsed = parse_pye(extract_paragraphs(io.BytesIO(data), file_name=instance.file.name))
-            problems = validate(parsed)
-            if problems:
-                raise PYEParseError(format_validation_errors(problems))
-        except PYEParseError as exc:
-            instance.delete()
-            raise ValidationError({"file": str(exc)})
-        print(f"PARSED {len(parsed.questions)} questions from '{instance.title}'")
-
-        # Save the reading passage onto the document
-        instance.parsed_text = parsed.passage
-        instance.save(update_fields=['parsed_text'])
-
-        # Create the quiz questions, choices, and explanations
-        for q in parsed.questions:
-            question = QuizQuestion.objects.create(
-                document=instance,
-                question_text=q.text,
-                explanation=q.explanation,
-            )
-            for c in q.choices:
-                QuizAnswer.objects.create(
-                    question=question,
-                    choice_letter=c.letter,
-                    choice_text=c.text,
-                    is_correct=c.is_correct,
-                )
-
-    # Removed detail action due to decorator conflicts
-
+            if instance.file:
+                try:
+                    print(f"Running PYE Parser on {instance.file.name}")
+                    import_document(instance)  # parse, validate, and save in one call
+                    print("Successfully parsed and saved document data.")
+                except PYEParseError as e:
+                    print(f"Parser validation failed: {e}")
+                    raise ValidationError(f"Document Error: {str(e)}")
+                except Exception as e:
+                    print(f"Unexpected parser error: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    raise ValidationError(f"Document Error: {str(e)}")
 
 class DocumentDetailView(APIView):
     def get(self, request, pk):
