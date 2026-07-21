@@ -15,10 +15,11 @@ class UserSerializer(serializers.ModelSerializer):
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=True)
+    access_code = serializers.CharField(write_only=True, required=False, allow_blank=True)
     
     class Meta:
         model = User
-        fields = ('username', 'password', 'password2', 'email', 'first_name', 'last_name')
+        fields = ('username', 'password', 'password2', 'email', 'first_name', 'last_name', 'access_code')
     
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
@@ -26,8 +27,13 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return attrs
     
     def create(self, validated_data):
+        access_code = validated_data.pop('access_code', '')
         validated_data.pop('password2')
         user = User.objects.create_user(**validated_data)
+        # this is only for teachers to get access to more features compared to students
+        if access_code == "TEACHERS2026":
+            user.is_staff = True
+            user.save()
         return user
 
 class GradeLevelSerializer(serializers.ModelSerializer):
@@ -56,14 +62,14 @@ class UploadedDocumentSerializer(serializers.ModelSerializer):
 class QuizAnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = QuizAnswer
-        fields = ['id', 'choice_letter', 'choice_text', 'is_correct']
+        fields = ['id', 'question', 'choice_letter', 'choice_text', 'is_correct']
 
 class QuizQuestionSerializer(serializers.ModelSerializer):
     answers = QuizAnswerSerializer(many=True, read_only=True)
     
     class Meta:
         model = QuizQuestion
-        fields = ['id', 'question_text', 'explanation', 'answers', 'created_at']
+        fields = ['id', 'document', 'question_text', 'explanation', 'answers', 'created_at']
 
 class QuizResponseSerializer(serializers.ModelSerializer):
     class Meta:

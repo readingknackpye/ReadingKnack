@@ -79,11 +79,22 @@ def parse_pye(paragraphs: list[str]) -> ParsedDoc:
             q_start = i
         elif a_start is None and ANSWER_KEY_HEADER.match(t):
             a_start = i
-    if q_start is None:
-        raise PYEParseError("Could not find a 'Questions to Answer' header.")
-    if a_start is None:
-        raise PYEParseError("Could not find an 'Answer Key' header.")
-    if not (0 < q_start < a_start):
+
+    if q_start is None and a_start is None:
+        non_empty = [ln for ln in lines if ln.strip()]
+        if not non_empty:
+            raise PYEParseError("Document is completely empty.")
+        # first line is title, the rest is passage
+        title = _clean(non_empty[0])
+        passage = "\n\n".join(_clean(ln) for ln in non_empty[1:])
+        return ParsedDoc(title=title, passage=passage, questions=[])
+    
+    # If they included Questions but forgot the Answer Key, raise an error
+    if q_start is not None and a_start is None:
+        raise PYEParseError("Found 'Questions to Answer' but could not find an 'Answer Key' header.")
+
+    # If they put the Answer Key before the Questions, raise an error
+    if not (0 <= q_start < a_start):
         raise PYEParseError("Section headers are out of order.")
 
     # --- title + passage ---
@@ -141,21 +152,21 @@ def parse_pye(paragraphs: list[str]) -> ParsedDoc:
     return ParsedDoc(title=title, passage=passage, questions=questions)
 
 
-def validate(doc: ParsedDoc) -> list[str]:
-    """Return a list of human-readable problems (empty == clean)."""
-    problems: list[str] = []
-    if not doc.passage.strip():
-        problems.append("Passage is empty.")
-    if not doc.questions:
-        problems.append("No questions were found.")
-    for q in doc.questions:
-        letters = [c.letter for c in q.choices]
-        if letters != ["A", "B", "C", "D"]:
-            problems.append(f"Q{q.number}: expected choices A-D, got {letters}.")
-        if q.correct_letter is None:
-            problems.append(f"Q{q.number}: no answer key entry (positional mismatch?).")
-        elif q.correct_letter not in letters:
-            problems.append(f"Q{q.number}: answer key letter {q.correct_letter} not among choices.")
-        if not q.explanation:
-            problems.append(f"Q{q.number}: missing explanation.")
-    return problems
+# def validate(doc: ParsedDoc) -> list[str]:
+#     """Return a list of human-readable problems (empty == clean)."""
+#     problems: list[str] = []
+#     if not doc.passage.strip():
+#         problems.append("Passage is empty.")
+#     if not doc.questions:
+#         problems.append("No questions were found.")
+#     for q in doc.questions:
+#         letters = [c.letter for c in q.choices]
+#         if letters != ["A", "B", "C", "D"]:
+#             problems.append(f"Q{q.number}: expected choices A-D, got {letters}.")
+#         if q.correct_letter is None:
+#             problems.append(f"Q{q.number}: no answer key entry (positional mismatch?).")
+#         elif q.correct_letter not in letters:
+#             problems.append(f"Q{q.number}: answer key letter {q.correct_letter} not among choices.")
+#         if not q.explanation:
+#             problems.append(f"Q{q.number}: missing explanation.")
+#     return problems

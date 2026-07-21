@@ -320,16 +320,16 @@ const getSkillName = (skillCategory) => {
 
               <div className="document-tags">
                 {getGradeName(doc.grade_level) && (
-  <span className="tag grade-tag">
-    {getGradeName(doc.grade_level)}
-  </span>
-)}
+                  <span className="tag grade-tag">
+                    {getGradeName(doc.grade_level)}
+                  </span>
+                )}
 
-{getSkillName(doc.skill_category) && (
-  <span className="tag skill-tag">
-    {getSkillName(doc.skill_category)}
-  </span>
-)}
+                {getSkillName(doc.skill_category) && (
+                  <span className="tag skill-tag">
+                    {getSkillName(doc.skill_category)}
+                  </span>
+                )}
               </div>
 
               <div className="document-actions">

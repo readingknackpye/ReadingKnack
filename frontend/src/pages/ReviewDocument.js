@@ -55,6 +55,44 @@ const ReviewDocument = () => {
     updatedQuestions[qIndex].answers[aIndex][field] = value;
     setQuestions(updatedQuestions);
   };
+
+  const handleAddQuestion = () => {
+    const newQuestion = {
+      id: `new_${Date.now()}`, // temp id for react to track it 
+      is_new: true, // tells our function to create a question instead of update a question
+      question_text: '',
+      explanation: '',
+      answers: [
+        { id: `new_a_${Date.now()}`, choice_letter: 'A', choice_text: '', is_correct: true },
+        { id: `new_b_${Date.now()}`, choice_letter: 'B', choice_text: '', is_correct: false },
+        { id: `new_c_${Date.now()}`, choice_letter: 'C', choice_text: '', is_correct: false },
+        { id: `new_d_${Date.now()}`, choice_letter: 'D', choice_text: '', is_correct: false }
+      ]
+    };
+    setQuestions([...questions, newQuestion]);
+  }
+
+  const handleDeleteQuestion = async (qIndex) => {
+    const questionToDelete = questions[qIndex];
+    // if a new question is being deleted, remove it from current state
+    if(questionToDelete.is_new){
+      const updatedQuestions = questions.filter((_, index) => index !== qIndex);
+      setQuestions(updatedQuestions);
+      return;
+    }
+    // if a existing question in database is being deleted, prompt for confirmation and delete via API
+    if(window.confirm("Are you sure you want to delete this question?")){
+      try{
+        await questionsAPI.delete(questionToDelete.id);
+        const updatedQuestions = questions.filter((_, index) => index !== qIndex);
+        setQuestions(updatedQuestions);
+      } catch (err) {
+        console.error("Failed to delete question: ", err);
+        alert("Failed to delete question. Please try again");
+      }
+    }
+  };
+
   // save logic before publishing new doc 
   const handleSaveAndPublish = async () => {
     setSaving(true);
@@ -70,35 +108,64 @@ const ReviewDocument = () => {
       // prepare arrays of promises for questions and answers
       const questionPromises = [];
       const answerPromises = [];
+      const newQuestions = [];
 
+      // separate existing updates from new creations
       questions.forEach(q => {
-        // queue question updates
-        questionPromises.push(
-          questionsAPI.update(q.id, {
-            question_text: q.question_text,
-            explanation: q.explanation
-          })
-        );
-
-        // queue answer updates
-        q.answers.forEach(a => {
-          answerPromises.push(
-            answersAPI.update(a.id, {
-              choice_text: a.choice_text,
-              is_correct: a.is_correct
+        if (q.is_new) {
+          newQuestions.push(q);
+        } else {
+          // queue EXISTING question updates
+          questionPromises.push(
+            questionsAPI.update(q.id, {
+              question_text: q.question_text,
+              explanation: q.explanation
             })
           );
-        });
+
+          // queue EXISTING answer updates
+          q.answers.forEach(a => {
+            answerPromises.push(
+              answersAPI.update(a.id, {
+                choice_text: a.choice_text,
+                is_correct: a.is_correct
+              })
+            );
+          });
+        }
       });
 
       // executes all updates concurrently
       await Promise.all([...questionPromises, ...answerPromises]);
 
+      for(const newQ of newQuestions){
+        const createdQRes = await questionsAPI.create({
+          document: parseInt(documentId), 
+          document_id: parseInt(documentId),
+          question_text: newQ.question_text,
+          explanation: newQ.explanation
+        });
+
+        const realQuestionId = createdQRes.data.id;
+        
+        const newAnswerPromises = newQ.answers.map(a =>
+          answersAPI.create({
+            question: realQuestionId,
+            question_id: realQuestionId, 
+            choice_letter: a.choice_letter,
+            choice_text: a.choice_text,
+            is_correct: a.is_correct
+          })
+        );
+
+        await Promise.all(newAnswerPromises);
+      }
+
       // redirect to the library once validation and saving is complete
       navigate('/documents');
 
     } catch (err) {
-      console.error('Save failed:', err);
+      console.error('Save failed:', err.response?.data || err);
       setError('Failed to save changes. Please try again.');
     } finally {
       setSaving(false);
@@ -168,29 +235,53 @@ const ReviewDocument = () => {
         <h2 className="text-3xl font-bold mb-8 mt-8 text-center w-full text-gray-800">Questions & Answers</h2>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Loop through all existing (or newly added) questions */}
           {questions.map((q, qIndex) => (
             <div key={q.id} className="card p-6 bg-white rounded-lg shadow-md border-t-4 border-blue-500 flex flex-col">
               
+              {/* Question Header Row with Title and Delete Button */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <label className="form-label font-bold text-lg" style={{ margin: 0 }}>
+                  Question {qIndex + 1}
+                </label>
+                <button className="btn btn-danger"
+                  type="button"
+                  onClick={() => handleDeleteQuestion(qIndex)}
+                  style={{
+                    backgroundColor: '#ef4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '6px 14px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    fontSize: '0.875rem'
+                  }}
+                  title="Delete Question"
+                >
+                  Delete ✕
+                </button>
+              </div>
+
               <div className="form-group mb-6">
-                <label className="form-label font-bold text-lg mb-2 block">Question {qIndex + 1}</label>
                 <input
                   type="text"
                   className="form-input w-full p-3 border rounded-lg font-semibold"
                   value={q.question_text}
                   onChange={(e) => handleQuestionChange(qIndex, 'question_text', e.target.value)}
+                  placeholder="Enter your question here..."
                 />
               </div>
 
               <div className="answers-grid grid gap-3 mb-6 flex-grow">
                 {q.answers.map((a, aIndex) => (
-                  // clicking anywhere highlights the answer choice
                   <label 
                     key={a.id} 
                     className="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors"
                     style={
                       a.is_correct 
-                        ? { backgroundColor: '#dcfce7', border: '2px solid #22c55e' } // bright Green if selected
-                        : { backgroundColor: '#f3f4f6', border: '2px solid transparent' } // light gray if not
+                        ? { backgroundColor: '#dcfce7', border: '2px solid #22c55e' } 
+                        : { backgroundColor: '#f3f4f6', border: '2px solid transparent' } 
                     }
                   >
                     <input
@@ -221,9 +312,19 @@ const ReviewDocument = () => {
                   placeholder="Explain why the correct answer is right..."
                 />
               </div>
-
             </div>
           ))}
+          {/* This allows you to add questions to a passage as an admin*/}
+          <div
+            onClick={handleAddQuestion}
+            className="card p-6 bg-gray-50 border-4 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center transition-colors"
+            style={{ minHeight: '350px', backgroundColor: '#f9fafb', cursor: 'pointer' }}
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#e5e7eb'} // darker gray hover so it feels clickable
+            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+          >
+            <div className="text-6xl text-gray-400 mb-4 font-light"></div>
+            <h2 className="text-xl font-bold text-gray-500">+ Add New Question</h2>
+          </div>
         </div>
       </div>
     </div>

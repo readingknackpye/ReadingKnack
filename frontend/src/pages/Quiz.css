@@ -30,18 +30,23 @@
     margin-bottom: 1rem;
    }
    
-   .passage-box {
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    height: 400px;
-    overflow-y: auto;
-    padding: 1.5rem;
-    background: #fafafa;
-    color: #666;
-    font-size: 1.1rem;
-    white-space: pre-wrap;
-   }
-   
+    .passage-box {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        height: 400px;
+        overflow-y: auto;
+        padding: 1.5rem;
+        background: #fafafa;
+        color: #444; 
+        font-size: 1.1rem;
+        white-space: pre-wrap; 
+        line-height: 1.7;    
+    }
+    .passage-box p {
+        margin-bottom: 1rem;
+        text-indent: 1.5rem; 
+    }
+
    /* Right column - Questions section */
    .questions-section {
     background: white;

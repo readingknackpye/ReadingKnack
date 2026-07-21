@@ -106,6 +106,10 @@ class UploadedDocumentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user if self.request.user.is_authenticated else None
+        file_obj = self.request.FILES.get('file')
+
+        if not file_obj or not file_obj.name.endswith('.docx'):
+            raise ValidationError("Invalid file format. Only .docx files are permitted.")
 
         with transaction.atomic():
             instance = serializer.save(uploader=user)
@@ -116,7 +120,7 @@ class UploadedDocumentViewSet(viewsets.ModelViewSet):
                     import_document(instance)  # parse, validate, and save in one call
                     print("Successfully parsed and saved document data.")
                 except PYEParseError as e:
-                    print(f"Parser validation failed: {e}")
+                    print(f"Parser failed: {e}")
                     raise ValidationError(f"Document Error: {str(e)}")
                 except Exception as e:
                     print(f"Unexpected parser error: {e}")

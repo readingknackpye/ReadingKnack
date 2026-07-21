@@ -1,39 +1,41 @@
 from django.db import transaction
 from .models import UploadedDocument, QuizQuestion, QuizAnswer
-from .pye_parser import parse_pye, extract_paragraphs, validate, PYEParseError
+from .docx_parser import parse_uploaded_docx  # <-- Switched to the new parser!
 
 @transaction.atomic
 def import_parsed_doc(document: UploadedDocument, parsed) -> None:
-    # 1. passage text -> the document itself (there's no active Passage model)
-    document.parsed_text = parsed.passage
-    document.save(update_fields=["parsed_text"])
+    document.parsed_text = parsed.parsed_text
+        
+    document.save(update_fields=["parsed_text", "title"])
 
-    # 2. idempotent: wipe old questions (cascades to their answers)
+    # wipe old questions (cascades to their answers)
     document.questions.all().delete()
 
-    # 3. recreate questions + choices + explanations
+    # recreate questions + choices + explanations
     for q in parsed.questions:
         question = QuizQuestion.objects.create(
             document=document,
-            question_text=q.text,
-            explanation=q.explanation,          # <-- finally populated
+            question_text=q.get('question_text', ''),
+            explanation=q.get('explanation', ''),
         )
+        
+        # stores choices in a answers list
         QuizAnswer.objects.bulk_create([
             QuizAnswer(
                 question=question,
-                choice_letter=c.letter,
-                choice_text=c.text,
-                is_correct=c.is_correct,
+                choice_letter=a.get('choice_letter', ''),
+                choice_text=a.get('choice_text', ''),
+                is_correct=a.get('is_correct', False),
             )
-            for c in q.choices
+            for a in q.get('answers', [])
         ])
 
-def import_document(document: UploadedDocument, *, strict: bool = True):
-    """Parse the document's file and write it. Returns (parsed, problems)."""
-    document.file.seek(0)                       # rewind in case it was read already
-    parsed = parse_pye(extract_paragraphs(document.file))
-    problems = validate(parsed)
-    if problems and strict:
-        raise PYEParseError("; ".join(problems))
+def import_document(document: UploadedDocument, *, strict: bool = False):
+    """Parse the document's file and write it to the database."""
+    document.file.seek(0)
+    
+    # call the new parser
+    parsed = parse_uploaded_docx(document.file)
+    
     import_parsed_doc(document, parsed)
-    return parsed, problems
+    return parsed
