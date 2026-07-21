@@ -88,6 +88,21 @@ class UploadedDocumentViewSet(viewsets.ModelViewSet):
     authentication_classes = [CsrfExemptSessionAuthentication]
     queryset = UploadedDocument.objects.all().order_by('-uploaded_at')
     serializer_class = UploadedDocumentSerializer
+    
+    def create(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return Response(
+                {"detail": "You must be logged in to upload documents."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        if not request.user.is_staff:
+            return Response(
+                {"detail": "Only administrators can upload documents."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         user = self.request.user if self.request.user.is_authenticated else None

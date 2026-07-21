@@ -46,14 +46,66 @@ const DocumentList = () => {
     }
   };
 
-  const filteredDocuments = documents.filter(doc => {
-    const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         doc.parsed_text?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesGrade = !selectedGrade || doc.grade_level?.id === parseInt(selectedGrade);
-    const matchesSkill = !selectedSkill || doc.skill_category?.id === parseInt(selectedSkill);
-    
-    return matchesSearch && matchesGrade && matchesSkill;
-  });
+const filteredDocuments = documents.filter((doc) => {
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+
+  const matchesSearch =
+    !normalizedSearchTerm ||
+    doc.title?.toLowerCase().includes(normalizedSearchTerm) ||
+    doc.parsed_text?.toLowerCase().includes(normalizedSearchTerm);
+
+  const documentGradeId =
+    typeof doc.grade_level === "object"
+      ? doc.grade_level?.id
+      : doc.grade_level;
+
+  const documentSkillId =
+    typeof doc.skill_category === "object"
+      ? doc.skill_category?.id
+      : doc.skill_category;
+
+  const matchesGrade =
+    !selectedGrade ||
+    Number(documentGradeId) === Number(selectedGrade);
+
+  const matchesSkill =
+    !selectedSkill ||
+    Number(documentSkillId) === Number(selectedSkill);
+
+  return matchesSearch && matchesGrade && matchesSkill;
+});
+
+const getGradeName = (gradeLevel) => {
+  if (!gradeLevel) {
+    return null;
+  }
+
+  if (typeof gradeLevel === "object") {
+    return gradeLevel.name;
+  }
+
+  const grade = gradeLevels.find(
+    (item) => Number(item.id) === Number(gradeLevel)
+  );
+
+  return grade?.name || null;
+};
+
+const getSkillName = (skillCategory) => {
+  if (!skillCategory) {
+    return null;
+  }
+
+  if (typeof skillCategory === "object") {
+    return skillCategory.name;
+  }
+
+  const skill = skillCategories.find(
+    (item) => Number(item.id) === Number(skillCategory)
+  );
+
+  return skill?.name || null;
+};
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -267,16 +319,17 @@ const DocumentList = () => {
               </div>
 
               <div className="document-tags">
-                {doc.grade_level && (
-                  <span className="tag grade-tag">
-                    {doc.grade_level.name}
-                  </span>
-                )}
-                {doc.skill_category && (
-                  <span className="tag skill-tag">
-                    {doc.skill_category.name}
-                  </span>
-                )}
+                {getGradeName(doc.grade_level) && (
+  <span className="tag grade-tag">
+    {getGradeName(doc.grade_level)}
+  </span>
+)}
+
+{getSkillName(doc.skill_category) && (
+  <span className="tag skill-tag">
+    {getSkillName(doc.skill_category)}
+  </span>
+)}
               </div>
 
               <div className="document-actions">
