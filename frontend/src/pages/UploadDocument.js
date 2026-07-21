@@ -8,6 +8,13 @@ import {
 } from '../api';
 
 
+const SUPPORTED_FILE_EXTENSIONS = ['.docx', '.pdf'];
+const SUPPORTED_FILE_TYPES = [
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/pdf',
+];
+
+
 const UploadDocument = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -77,8 +84,12 @@ const fetchCurrentUser = async () => {
   };
 
   const handleFileSelect = (file) => {
-    if (file.type !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-      setError('Please select a .docx file');
+    const fileName = file?.name?.toLowerCase() || '';
+    const hasSupportedExtension = SUPPORTED_FILE_EXTENSIONS.some(ext => fileName.endsWith(ext));
+    const hasSupportedType = SUPPORTED_FILE_TYPES.includes(file?.type);
+
+    if (!hasSupportedExtension && !hasSupportedType) {
+      setError('Please select a .docx or .pdf file');
       return;
     }
     
@@ -225,14 +236,14 @@ const fetchCurrentUser = async () => {
                   {/* being able to upload files by clicking content box not just label*/}
                   <input 
                     type="file" 
-                    accept=".docx" 
+                    accept=".docx,.pdf"
                     onChange={(e) => handleFileSelect(e.target.files[0])} 
                     className="hidden" 
                   />
                   <span className="file-drop-icon">📁</span> 
                   <div> 
                     <p className="file-drop-text"> 
-                      Drop your .docx file here, or{' '} 
+                      Drop your .docx or .pdf file here, or{' '}
                       <span className="file-browse-link">browse</span>
                     </p>
                   </div>

@@ -110,7 +110,7 @@ class UploadedDocumentViewSet(viewsets.ModelViewSet):
         with transaction.atomic():
             instance = serializer.save(uploader=user)
 
-            if instance.file and instance.file.name.endswith('.docx'):
+            if instance.file:
                 try:
                     print(f"Running PYE Parser on {instance.file.name}")
                     import_document(instance)  # parse, validate, and save in one call
