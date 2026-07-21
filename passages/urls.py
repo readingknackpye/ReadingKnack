@@ -7,7 +7,7 @@ from rest_framework import routers
 from .views import (
     SubmitQuizView, UserRegistrationView, UserLoginView, UserLogoutView, UserProfileView,
     UploadedDocumentViewSet, QuizQuestionViewSet, QuizAnswerViewSet,
-    QuizResponseViewSet, GradeLevelViewSet, SkillCategoryViewSet, DocumentDetailView
+    QuizResponseViewSet, GradeLevelViewSet, SkillCategoryViewSet, DocumentDetailView,StudentDashboardView
 )
 
 # CSRF ping for frontend
@@ -40,6 +40,11 @@ urlpatterns = [
     path('api/auth/logout/',   UserLogoutView.as_view(),      name='user_logout'),
     path('api/auth/profile/',  UserProfileView.as_view(),     name='user_profile'),
     path('api/auth/csrf/',     csrf_ping,                     name='csrf_ping'),
+    path(
+    'api/student-dashboard/',
+    StudentDashboardView.as_view(),
+    name='student_dashboard'
+),
     
 ]
 

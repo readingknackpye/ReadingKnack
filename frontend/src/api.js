@@ -88,6 +88,9 @@ export const quizAPI = {
   
   // Get response by ID
   getResponse: (id) => api.get(`/responses/${id}/`),
+
+  // Get student dashboard data
+  getStudentDashboard: () => api.get('/student-dashboard/'),
 };
 
 // Grade Levels API

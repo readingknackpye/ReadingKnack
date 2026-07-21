@@ -12,6 +12,7 @@ import Results from './pages/Results';
 import Navbar from './components/Navbar';
 import UploadDocument from './pages/UploadDocument';
 import ReviewDocument from './pages/ReviewDocument';
+import StudentDashboard from './pages/StudentDashboard';
 
 function App() {
   return (
@@ -27,6 +28,8 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/review/:documentId" element={<ReviewDocument />} />
+        <Route path="/student-dashboard" element={<StudentDashboard />}
+/>
       </Routes>
     </Router>
   );
