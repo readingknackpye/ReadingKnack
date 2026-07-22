@@ -11,7 +11,8 @@ const Signup = () => {
     password: '',
     password2: '',
     first_name: '',
-    last_name: ''
+    last_name: '',
+    role: 'student'
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -58,7 +59,8 @@ const Signup = () => {
         password: formData.password,
         password2: formData.password2,
         first_name: formData.first_name,
-        last_name: formData.last_name
+        last_name: formData.last_name,
+        role: formData.role
       });
 
       console.log('Signup response:', response);
@@ -72,7 +74,8 @@ const Signup = () => {
           password: '',
           password2: '',
           first_name: '',
-          last_name: ''
+          last_name: '',
+          role: 'student'
         });
         
         // Redirect to login after 2 seconds
@@ -194,7 +197,30 @@ const Signup = () => {
             className="signupInput"
             required
           />
-          
+
+          <div style={{ display: 'flex', gap: '20px', margin: '10px 0 15px', justifyContent: 'center' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+              <input
+                type="radio"
+                name="role"
+                value="student"
+                checked={formData.role === 'student'}
+                onChange={handleChange}
+              />
+              Student
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+              <input
+                type="radio"
+                name="role"
+                value="teacher"
+                checked={formData.role === 'teacher'}
+                onChange={handleChange}
+              />
+              Teacher
+            </label>
+          </div>
+
           <button
             className="signUpButton"
             type="submit"

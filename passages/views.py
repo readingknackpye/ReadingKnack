@@ -435,7 +435,7 @@ from django.middleware.csrf import get_token
 from django.http import JsonResponse
 from passages.models import (
     UploadedDocument, QuizQuestion, QuizAnswer,
-    QuizResponse, UserAnswer, GradeLevel, SkillCategory
+    QuizResponse, UserAnswer, GradeLevel, SkillCategory, Classroom
 )
 from django import forms
 from docx import Document
@@ -444,15 +444,17 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action as drf_action
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from .serializers import (
     UploadedDocumentSerializer, QuizQuestionSerializer, QuizAnswerSerializer,
-    QuizResponseSerializer, DocumentDetailSerializer, GradeLevelSerializer, 
-    SkillCategorySerializer, UserRegistrationSerializer, UserSerializer
+    QuizResponseSerializer, DocumentDetailSerializer, GradeLevelSerializer,
+    SkillCategorySerializer, UserRegistrationSerializer, UserSerializer,
+    ClassroomSerializer
 )
 from django.http import JsonResponse
 import json
 from .authentication import CsrfExemptSessionAuthentication
+from .permissions import IsTeacher
 import os
 from passages.gemini_utils import generate_questions, parse_questions, save_parsed_questions
 
@@ -618,6 +620,18 @@ class GradeLevelViewSet(viewsets.ModelViewSet):
 class SkillCategoryViewSet(viewsets.ModelViewSet):
     queryset = SkillCategory.objects.all()
     serializer_class = SkillCategorySerializer
+
+
+class ClassroomViewSet(viewsets.ModelViewSet):
+    authentication_classes = [CsrfExemptSessionAuthentication]
+    serializer_class = ClassroomSerializer
+    permission_classes = [IsAuthenticated, IsTeacher]
+
+    def get_queryset(self):
+        return Classroom.objects.filter(teacher=self.request.user).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        serializer.save(teacher=self.request.user)
 
 
 def generate_questions_for_document(request, document_id):

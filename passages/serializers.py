@@ -2,33 +2,48 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from .models import (
-    UploadedDocument, GradeLevel, SkillCategory, 
-    QuizQuestion, QuizAnswer, QuizResponse, UserAnswer
+    UploadedDocument, GradeLevel, SkillCategory,
+    QuizQuestion, QuizAnswer, QuizResponse, UserAnswer, Profile, Classroom
 )
 
 class UserSerializer(serializers.ModelSerializer):
+    role = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'date_joined')
-        read_only_fields = ('id', 'date_joined')
+        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'date_joined', 'role')
+        read_only_fields = ('id', 'date_joined', 'role')
+
+    def get_role(self, obj):
+        profile = getattr(obj, 'profile', None)
+        return profile.role if profile else Profile.ROLE_STUDENT
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=True)
-    
+    role = serializers.ChoiceField(choices=Profile.ROLE_CHOICES, write_only=True, required=False, default=Profile.ROLE_STUDENT)
+
     class Meta:
         model = User
-        fields = ('username', 'password', 'password2', 'email', 'first_name', 'last_name')
-    
+        fields = ('username', 'password', 'password2', 'email', 'first_name', 'last_name', 'role')
+
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
             raise serializers.ValidationError({"password": "Password fields didn't match."})
         return attrs
-    
+
     def create(self, validated_data):
         validated_data.pop('password2')
+        role = validated_data.pop('role', Profile.ROLE_STUDENT)
         user = User.objects.create_user(**validated_data)
+        Profile.objects.create(user=user, role=role)
         return user
+
+class ClassroomSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Classroom
+        fields = ['id', 'name', 'teacher', 'created_at']
+        read_only_fields = ['id', 'teacher', 'created_at']
 
 class GradeLevelSerializer(serializers.ModelSerializer):
     class Meta:

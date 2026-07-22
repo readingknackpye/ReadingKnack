@@ -14,6 +14,28 @@ class SkillCategory(models.Model):
     def __str__(self):
         return self.name
 
+class Profile(models.Model):
+    ROLE_TEACHER = 'teacher'
+    ROLE_STUDENT = 'student'
+    ROLE_CHOICES = [
+        (ROLE_TEACHER, 'Teacher'),
+        (ROLE_STUDENT, 'Student'),
+    ]
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default=ROLE_STUDENT)
+
+    def __str__(self):
+        return f"{self.user.username} ({self.role})"
+
+class Classroom(models.Model):
+    name = models.CharField(max_length=255)
+    teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='classrooms')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
 # class Passage(models.Model): 
 #     title = models.CharField(max_length=255) #passage title
 #     text = models.TextField() #the text

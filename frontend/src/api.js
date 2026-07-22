@@ -90,6 +90,13 @@ export const quizAPI = {
   getResponse: (id) => api.get(`/responses/${id}/`),
 };
 
+// Classrooms API (teacher only)
+export const classroomsAPI = {
+  getAll: () => api.get('/classrooms/'),
+  create: (data) => api.post('/classrooms/', data),
+  delete: (id) => api.delete(`/classrooms/${id}/`),
+};
+
 // Grade Levels API
 export const gradeLevelsAPI = {
   getAll: () => api.get('/grade-levels/'),
