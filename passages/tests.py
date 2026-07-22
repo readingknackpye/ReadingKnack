@@ -7,6 +7,7 @@ from docx import Document
 from passages.docx_parser import parse_uploaded_docx
 from passages.gemini_utils import save_parsed_questions
 from passages.models import GradeLevel, SkillCategory, UploadedDocument, QuizQuestion, QuizAnswer
+from passages.pye_parser import parse_pye
 
 
 class DocxParserTests(TestCase):
@@ -119,3 +120,16 @@ class DocxParserTests(TestCase):
         self.assertTrue(answers.get(choice_letter='C').is_correct)
         self.assertFalse(answers.get(choice_letter='A').is_correct)
 
+def test_choices_without_space_after_delimiter(self):
+    """'A.European' (no space) must still split into four choices."""
+    chunk = (
+        "1. What is the main idea? "
+        "A.European countries faced destruction. "
+        "B.The United States gained power. "
+        "C.Prices rose sharply. "
+        "D.A new welfare program began."
+    )
+    doc = parse_pye(["Title", "Questions to Answer", chunk,
+                     "Answer Key with Explanations:", "- A (Because.)"])
+    self.assertEqual(len(doc.questions), 1)
+    self.assertEqual("".join(c.letter for c in doc.questions[0].choices), "ABCD")
