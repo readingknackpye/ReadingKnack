@@ -268,7 +268,7 @@ const getSkillName = (skillCategory) => {
                 : "No passages match your current filters."
               }
             </p>
-            {documents.length === 0 && currentUser ?.is_staff && (
+            {documents.length === 0 && currentUser?.role === 'teacher' && (
               <Link to="/upload" className="btn btn-primary">
                 Upload Your First Passage
               </Link>
@@ -279,7 +279,7 @@ const getSkillName = (skillCategory) => {
         <div className="documents-grid">
           {filteredDocuments.map(doc => (
             <div key={doc.id} className="card document-card" style={{position: 'relative'}}>
-              {currentUser?.is_staff && (
+              {currentUser?.role === 'teacher' && (
               <button
                 onClick={() => handleDeleteClick(doc)}
                 style={{
