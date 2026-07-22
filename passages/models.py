@@ -14,7 +14,6 @@ class SkillCategory(models.Model):
     def __str__(self):
         return self.name
 
-<<<<<<< HEAD
 class Profile(models.Model):
     ROLE_TEACHER = 'teacher'
     ROLE_STUDENT = 'student'
@@ -33,47 +32,9 @@ class Classroom(models.Model):
     name = models.CharField(max_length=255)
     teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='classrooms')
     created_at = models.DateTimeField(auto_now_add=True)
-=======
-class Topic(models.Model):
-    name = models.CharField(max_length=120, unique=True)
-
-    class Meta:
-        ordering = ['name']
->>>>>>> 52131e5 (added topic model and program/difficulty field)
 
     def __str__(self):
         return self.name
-
-<<<<<<< HEAD
-=======
-
->>>>>>> 52131e5 (added topic model and program/difficulty field)
-# class Passage(models.Model): 
-#     title = models.CharField(max_length=255) #passage title
-#     text = models.TextField() #the text
-#     uploader = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
-#     grade_level = models.ForeignKey(GradeLevel, on_delete=models.CASCADE, default=1) 
-#     skill_category = models.ForeignKey(SkillCategory, on_delete=models.CASCADE, default=1)  # we'll create ID 1
-
-#     def __str__(self):
-#         return self.title #return title
-    
-# class Question(models.Model):
-#     passage = models.ForeignKey('Passage', on_delete=models.CASCADE,)
-#     question_text = models.TextField()
-#     correct_choice = models.CharField(max_length=1)
-#     explanation =  models.TextField()
-    
-#     def __str__(self):
-#         return self.question_text
-
-# class AnswerChoice(models.Model):
-#     question =  models.ForeignKey(Question, on_delete=models.CASCADE,)
-#     choice_letter = models.CharField(max_length=1)
-#     choice_text = models.TextField()
-
-#     def __str__(self):
-#         return self.choice_letter
     
 class UploadedDocument(models.Model):
     PROGRAM_STANDARD = 'standard'
