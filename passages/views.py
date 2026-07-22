@@ -76,8 +76,8 @@ def upload_document(request):
 
 def clean_file(self):
     file = self.cleaned_data.get('file')
-    if not file.name.endswith('.docx'):
-        raise forms.ValidationError('Only .docx files are supported.')
+    if not file.name.endswith(('.docx', '.pdf')):
+        raise forms.ValidationError('Only .docx and .pdf files are supported.')
     return file
 
 
@@ -109,8 +109,8 @@ class UploadedDocumentViewSet(viewsets.ModelViewSet):
         user = self.request.user if self.request.user.is_authenticated else None
         file_obj = self.request.FILES.get('file')
 
-        if not file_obj or not file_obj.name.endswith('.docx'):
-            raise ValidationError("Invalid file format. Only .docx files are permitted.")
+        if not file_obj or not file_obj.name.endswith(('.docx', '.pdf')):
+            raise ValidationError("Invalid file format. Only .docx and .pdf files are permitted.")
 
         with transaction.atomic():
             instance = serializer.save(uploader=user)
