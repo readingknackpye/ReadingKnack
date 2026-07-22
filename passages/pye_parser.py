@@ -258,19 +258,25 @@ def parse_pye(paragraphs: list[str]) -> ParsedDoc:
     lines = [p.rstrip() for p in paragraphs]
 
     q_match = QUESTIONS_HEADER_TEXT.search(text)
+    
     if q_match is None:
-        raise PYEParseError(_format_error(
-            "Could not find a 'Questions to Answer' header.",
-            context=_preview_readable_paragraphs(lines),
-            hint="Add 'Questions to Answer' as its own paragraph after the passage and before the numbered questions.",
-        ))
+        non_empty = [_clean(ln) for ln in lines if ln.strip()]
+        if not non_empty:
+            raise PYEParseError("Document is completely empty.")
+        title = _clean(non_empty[0])
+        passage = _clean(" ".join(non_empty[1:]))
+        # Return immediately with NO questions
+        return ParsedDoc(title=title, passage=passage, questions=[])
 
     a_match = ANSWER_KEY_HEADER_TEXT.search(text, q_match.end())
+    
     if a_match is None:
-        raise PYEParseError(_format_error(
-            "Could not find an 'Answer Key' header.",
-            hint="Add 'Answer Key' as its own paragraph after the last question and before the correct answers.",
-        ))
+        a_match_start = len(text)
+        answer_text = ""
+    else:
+        a_match_start = a_match.start()
+        answer_text = text[a_match.end():]
+
     if not q_match.start() < a_match.start():
         raise PYEParseError(_format_error(
             "The section headers are out of order.",

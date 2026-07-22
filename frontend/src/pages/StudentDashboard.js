@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { quizAPI } from '../api';
 import './StudentDashboard.css';
 
@@ -32,6 +31,62 @@ const StudentDashboard = () => {
     loadDashboard();
   }, []);
 
+  // automatically calculate stats whenever testHistory changes
+  const stats = useMemo(() => {
+    if (!testHistory || testHistory.length === 0) return null;
+
+    let totalPercentage = 0;
+    let totalSeconds = 0;
+    const skillStats = {};
+
+    testHistory.forEach(test => {
+      // average score
+      totalPercentage += (test.percentage || 0);
+
+      // total duration in a quiz in MM:SS format
+      if (test.duration && typeof test.duration === 'string') {
+        const [mins, secs] = test.duration.split(':').map(Number);
+        if (!isNaN(mins) && !isNaN(secs)) {
+          totalSeconds += (mins * 60) + secs;
+        }
+      }
+
+      // identify what makes a weak skill
+      const skill = test.skill || 'Uncategorized';
+      if (!skillStats[skill]) {
+        skillStats[skill] = { totalPct: 0, count: 0 };
+      }
+      skillStats[skill].totalPct += (test.percentage || 0);
+      skillStats[skill].count += 1;
+    });
+
+    const avgScore = Math.round(totalPercentage / testHistory.length);
+    const totalMins = Math.floor(totalSeconds / 60);
+    const formattedTotalTime = `${totalMins}m ${totalSeconds % 60}s`;
+
+    // find what the weakest skill is
+    let weakestSkill = 'N/A';
+    let lowestAvg = 100;
+    
+    Object.keys(skillStats).forEach(skill => {
+      // ignore uncategorized if there are actual skills to measure
+      if (skill === 'Uncategorized' && Object.keys(skillStats).length > 1) return;
+      
+      const avg = skillStats[skill].totalPct / skillStats[skill].count;
+      if (avg <= lowestAvg) {
+        lowestAvg = avg;
+        weakestSkill = skill;
+      }
+    });
+
+    return {
+      totalTests: testHistory.length,
+      avgScore,
+      formattedTotalTime,
+      weakestSkill: { name: weakestSkill, avg: Math.round(lowestAvg) }
+    };
+  }, [testHistory]);
+
   if (loading) {
     return (
       <main className="student-dashboard">
@@ -52,14 +107,45 @@ const StudentDashboard = () => {
     );
   }
 
-  
-
   return (
     <main className="student-dashboard">
       <section className="student-dashboard-header">
         <h1>Student Dashboard</h1>
         <p>View your previous tests and performance.</p>
       </section>
+
+      {/* Stat Card Section */}
+      {stats && (
+        <section className="dashboard-stats">
+          <div className="stat-card">
+            <h3>Tests Completed</h3>
+            <p className="stat-value">{stats.totalTests}</p>
+          </div>
+          
+          <div className="stat-card">
+            <h3>Average Score</h3>
+            <p className="stat-value">{stats.avgScore}%</p>
+          </div>
+          
+          <div className="stat-card">
+            <h3>Total Reading Time</h3>
+            <p className="stat-value">{stats.formattedTotalTime}</p>
+          </div>
+
+          <div className="stat-card weak-skill-card">
+            <h3>Focus Area</h3>
+            <p className="stat-value skill-name">{stats.weakestSkill.name}</p>
+            <div className="skill-bar-bg">
+              {/* The progress bar width matches their average score in this skill */}
+              <div 
+                className="skill-bar-fill" 
+                style={{ width: `${stats.weakestSkill.avg}%` }}
+              ></div>
+            </div>
+            <p className="skill-subtext">{stats.weakestSkill.avg}% Average</p>
+          </div>
+        </section>
+      )}
 
       <section className="student-dashboard-content">
         <h2>Previous Tests</h2>
@@ -81,30 +167,23 @@ const StudentDashboard = () => {
                   <th>Completed At</th>
                 </tr>
               </thead>
-
-  
-
               <tbody>
-  {testHistory.map((test) => (
-    <tr key={test.id}>
-      <td>{test.test_name || 'N/A'}</td>
-      <td>{test.grade_level || 'N/A'}</td>
-      <td>{test.skill || 'N/A'}</td>
-      <td>{test.duration || 'N/A'}</td>
-      <td>
-        {test.score ?? 'N/A'} / {test.total_questions ?? 'N/A'}
-        {test.percentage !== undefined
-          ? ` (${test.percentage}%)`
-          : ''}
-      </td>
-      <td>
-        {test.submitted_at
-          ? new Date(test.submitted_at).toLocaleString()
-          : 'N/A'}
-      </td>
-    </tr>
-  ))}
-</tbody>
+                {testHistory.map((test) => (
+                  <tr key={test.id}>
+                    <td>{test.test_name || 'N/A'}</td>
+                    <td>{test.grade_level || 'N/A'}</td>
+                    <td>{test.skill || 'N/A'}</td>
+                    <td>{test.duration || 'N/A'}</td>
+                    <td>
+                      {test.score ?? 'N/A'} / {test.total_questions ?? 'N/A'}
+                      {test.percentage !== undefined ? ` (${test.percentage}%)` : ''}
+                    </td>
+                    <td>
+                      {test.submitted_at ? new Date(test.submitted_at).toLocaleString() : 'N/A'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
           </div>
         )}

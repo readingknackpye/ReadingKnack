@@ -205,6 +205,7 @@ const Quiz = () => {
         response = await quizAPI.submit({
           document_id: parseInt(documentId),
           user_name: 'Anonymous', // You can add a username input field later
+          time_spent: timeElapsed,
           answers: answersArray
         });
 

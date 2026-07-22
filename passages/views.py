@@ -186,12 +186,13 @@ class SubmitQuizView(APIView):
             document_id = data.get('document_id')
             user_name = data.get('user_name', 'Anonymous')
             answers = data.get('answers', [])
+            time_spent = data.get('time_spent', 0)
 
             authenticated_user = (
-    request.user
-    if request.user.is_authenticated
-    else None
-)
+                request.user
+                if request.user.is_authenticated
+                else None
+            )
 
             document = get_object_or_404(UploadedDocument, id=document_id)
             questions = QuizQuestion.objects.filter(document=document)
@@ -233,6 +234,7 @@ class SubmitQuizView(APIView):
                      if authenticated_user
                      else user_name
                 ),
+                duration_seconds=time_spent,
                 score=score,
                 total_questions=total_questions
             )

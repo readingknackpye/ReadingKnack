@@ -121,7 +121,11 @@ class StudentDashboardSerializer(serializers.ModelSerializer):
         )
 
     def get_duration(self, obj):
-        return 'N/A'
+        if not obj.duration_seconds:
+            return "N/A"
+        mins = obj.duration_seconds // 60
+        secs = obj.duration_seconds % 60
+        return f"{mins}:{secs:02d}"
 
 
 class UserAnswerSerializer(serializers.ModelSerializer):
