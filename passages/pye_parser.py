@@ -67,7 +67,11 @@ QUESTION_RE = re.compile(r"^(\d+)\s*[.)]\s*(.+)$", re.S)
 QUESTION_MARKER_RE = re.compile(r"(?<!\w)(\d{1,2})\s*[.)]\s+", re.S)
 # "A. choice" / "A) choice" / "A.choice" (spacing is inconsistent in PYE docs)
 CHOICE_RE = re.compile(r'^([A-D])\s*[.)]\s*["\u201c\u201d]?\s*(.+)$', re.S)
-CHOICE_MARKER_RE = re.compile(r'(?<!\w)([A-D])\s*[.)]\s*["\u201c\u201d]?\s+', re.S)
+CHOICE_MARKER_RE = re.compile(
+    r'(?<!\w)([A-D])\s*[.)]\s*["\u201c\u201d]?'
+    r'(?:\s+|(?=[A-Z](?![.)]))|(?=[a-z\d]))',
+    re.S,
+)
 # answer-key line: "A (explanation ...)"  -- letter, then explanation in parens
 KEY_RE = re.compile(r'^([A-D])\s*\((.*)\)\s*$', re.S)
 NUMBERED_KEY_MARKER_RE = re.compile(r"(?<!\w)(\d{1,2})\s*[.)]\s*([A-D])\s*(?:\(\s*)?", re.S)
@@ -258,25 +262,19 @@ def parse_pye(paragraphs: list[str]) -> ParsedDoc:
     lines = [p.rstrip() for p in paragraphs]
 
     q_match = QUESTIONS_HEADER_TEXT.search(text)
-    
     if q_match is None:
-        non_empty = [_clean(ln) for ln in lines if ln.strip()]
-        if not non_empty:
-            raise PYEParseError("Document is completely empty.")
-        title = _clean(non_empty[0])
-        passage = _clean(" ".join(non_empty[1:]))
-        # Return immediately with NO questions
-        return ParsedDoc(title=title, passage=passage, questions=[])
+        raise PYEParseError(_format_error(
+            "Could not find a 'Questions to Answer' header.",
+            context=_preview_readable_paragraphs(lines),
+            hint="Add 'Questions to Answer' as its own paragraph after the passage and before the numbered questions.",
+        ))
 
     a_match = ANSWER_KEY_HEADER_TEXT.search(text, q_match.end())
-    
     if a_match is None:
-        a_match_start = len(text)
-        answer_text = ""
-    else:
-        a_match_start = a_match.start()
-        answer_text = text[a_match.end():]
-
+        raise PYEParseError(_format_error(
+            "Could not find an 'Answer Key' header.",
+            hint="Add 'Answer Key' as its own paragraph after the last question and before the correct answers.",
+        ))
     if not q_match.start() < a_match.start():
         raise PYEParseError(_format_error(
             "The section headers are out of order.",
