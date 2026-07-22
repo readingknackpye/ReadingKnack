@@ -1,0 +1,78 @@
+
+.student-dashboard {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 110px 24px 50px;
+}
+
+.student-dashboard-header {
+  background: #ffffff;
+  border: 2px solid #9b51e0;
+  padding: 28px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.student-dashboard-header h1 {
+  margin: 0 0 8px;
+  font-size: 2rem;
+}
+
+.student-dashboard-header p {
+  margin: 0;
+  color: #666666;
+}
+
+.student-dashboard-content {
+  background: #ffffff;
+  border: 2px solid #9b51e0;
+  padding: 28px;
+}
+
+.student-dashboard-content h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.dashboard-table-wrapper {
+  overflow-x: auto;
+}
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+  padding: 14px;
+  text-align: left;
+  border-bottom: 1px solid #dddddd;
+}
+
+.dashboard-table th {
+  background: #f7f4ff;
+  font-weight: 700;
+}
+
+.dashboard-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.dashboard-empty {
+  padding: 30px;
+  text-align: center;
+  color: #666666;
+  border: 1px solid #dddddd;
+}
+
+@media (max-width: 700px) {
+  .student-dashboard {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .student-dashboard-content {
+    padding: 16px;
+  }
+}

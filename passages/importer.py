@@ -1,6 +1,6 @@
 from django.db import transaction
 from .models import UploadedDocument, QuizQuestion, QuizAnswer
-from .docx_parser import parse_uploaded_docx  # <-- Switched to the new parser!
+from .pye_parser import extract_paragraphs, format_validation_errors, parse_pye, validate, PYEParseError
 
 @transaction.atomic
 def import_parsed_doc(document: UploadedDocument, parsed) -> None:
@@ -30,12 +30,12 @@ def import_parsed_doc(document: UploadedDocument, parsed) -> None:
             for a in q.get('answers', [])
         ])
 
-def import_document(document: UploadedDocument, *, strict: bool = False):
-    """Parse the document's file and write it to the database."""
-    document.file.seek(0)
-    
-    # call the new parser
-    parsed = parse_uploaded_docx(document.file)
-    
+def import_document(document: UploadedDocument, *, strict: bool = True):
+    """Parse the document's file and write it. Returns (parsed, problems)."""
+    document.file.seek(0)                       # rewind in case it was read already
+    parsed = parse_pye(extract_paragraphs(document.file, file_name=document.file.name))
+    problems = validate(parsed)
+    if problems and strict:
+        raise PYEParseError(format_validation_errors(problems))
     import_parsed_doc(document, parsed)
-    return parsed
+    return parsed, problems

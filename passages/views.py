@@ -18,11 +18,12 @@ from rest_framework.response import Response
 from rest_framework.decorators import action as drf_action
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
 from .serializers import (
     UploadedDocumentSerializer, QuizQuestionSerializer, QuizAnswerSerializer,
     QuizResponseSerializer, DocumentDetailSerializer, GradeLevelSerializer, 
-    SkillCategorySerializer, UserRegistrationSerializer, UserSerializer
+    SkillCategorySerializer, UserRegistrationSerializer, UserSerializer,StudentDashboardSerializer
 )
 from django.http import JsonResponse
 import json
@@ -114,7 +115,7 @@ class UploadedDocumentViewSet(viewsets.ModelViewSet):
         with transaction.atomic():
             instance = serializer.save(uploader=user)
 
-            if instance.file and instance.file.name.endswith('.docx'):
+            if instance.file:
                 try:
                     print(f"Running PYE Parser on {instance.file.name}")
                     import_document(instance)  # parse, validate, and save in one call
@@ -155,6 +156,28 @@ class QuizResponseViewSet(viewsets.ModelViewSet):
     queryset = QuizResponse.objects.all()
     serializer_class = QuizResponseSerializer
 
+class StudentDashboardView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        responses = (
+            QuizResponse.objects
+            .filter(user=request.user)
+            .select_related(
+                'document',
+                'document__grade_level',
+                'document__skill_category',
+            )
+            .order_by('-submitted_at')
+        )
+
+        serializer = StudentDashboardSerializer(
+            responses,
+            many=True
+        )
+
+        return Response(serializer.data)
+
 
 class SubmitQuizView(APIView):
     def post(self, request):
@@ -163,6 +186,12 @@ class SubmitQuizView(APIView):
             document_id = data.get('document_id')
             user_name = data.get('user_name', 'Anonymous')
             answers = data.get('answers', [])
+
+            authenticated_user = (
+    request.user
+    if request.user.is_authenticated
+    else None
+)
 
             document = get_object_or_404(UploadedDocument, id=document_id)
             questions = QuizQuestion.objects.filter(document=document)
@@ -198,7 +227,12 @@ class SubmitQuizView(APIView):
             # Create quiz response
             quiz_response = QuizResponse.objects.create(
                 document=document,
-                user_name=user_name,
+                user=authenticated_user,
+                user_name=(
+                    authenticated_user.username
+                     if authenticated_user
+                     else user_name
+                ),
                 score=score,
                 total_questions=total_questions
             )
