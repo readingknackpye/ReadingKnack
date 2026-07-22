@@ -72,6 +72,45 @@ const getScoreClass = (percentage) => {
   return 'score-low';
 };
 
+const stats = useMemo(() => {
+  if (!testHistory || testHistory.length === 0) {
+    return null;
+  }
+
+  const totalTests = testHistory.length;
+
+  const avgScore = Math.round(
+    testHistory.reduce((sum, t) => sum + (t.percentage || 0), 0) / totalTests
+  );
+
+  const totalSeconds = testHistory.reduce(
+    (sum, t) => sum + (t.duration_seconds || 0),
+    0
+  );
+  const formattedTotalTime = formatDuration(totalSeconds);
+
+  // group by skill, average percentage per skill, find the lowest
+  const skillTotals = {};
+  testHistory.forEach((t) => {
+    const skill = t.skill || 'N/A';
+    if (!skillTotals[skill]) {
+      skillTotals[skill] = { sum: 0, count: 0 };
+    }
+    skillTotals[skill].sum += t.percentage || 0;
+    skillTotals[skill].count += 1;
+  });
+
+  let weakestSkill = { name: 'N/A', avg: 0 };
+  Object.entries(skillTotals).forEach(([name, { sum, count }]) => {
+    const avg = Math.round(sum / count);
+    if (weakestSkill.name === 'N/A' || avg < weakestSkill.avg) {
+      weakestSkill = { name, avg };
+    }
+  });
+
+  return { totalTests, avgScore, formattedTotalTime, weakestSkill };
+}, [testHistory]);
+
   if (loading) {
     return (
       <main className="student-dashboard">
