@@ -8,7 +8,7 @@ from django.middleware.csrf import get_token
 from django.http import JsonResponse
 from passages.models import (
     UploadedDocument, QuizQuestion, QuizAnswer,
-    QuizResponse, UserAnswer, GradeLevel, SkillCategory
+    QuizResponse, UserAnswer, GradeLevel, SkillCategory, Classroom
 )
 from django import forms
 from docx import Document
@@ -18,32 +18,25 @@ from rest_framework.response import Response
 from rest_framework.decorators import action as drf_action
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
 from .serializers import (
     UploadedDocumentSerializer, QuizQuestionSerializer, QuizAnswerSerializer,
-    QuizResponseSerializer, DocumentDetailSerializer, GradeLevelSerializer, 
-    SkillCategorySerializer, UserRegistrationSerializer, UserSerializer
+    QuizResponseSerializer, DocumentDetailSerializer, GradeLevelSerializer,
+    SkillCategorySerializer, UserRegistrationSerializer, UserSerializer,StudentDashboardSerializer,
+    ClassroomSerializer
 )
 from django.http import JsonResponse
 import json
 from .authentication import CsrfExemptSessionAuthentication
+from .permissions import IsTeacher
 import os
+from .docx_parser import parse_uploaded_docx
 from passages.gemini_utils import generate_questions, parse_questions, save_parsed_questions
-import io
-from .pye_parser import (
-    PYEParseError,
-    SUPPORTED_EXTENSIONS,
-    extract_paragraphs,
-    format_validation_errors,
-    parse_pye,
-    validate,
-)
-
-
-# def passage_list(request):
-#     passages = Passage.objects.all()
-#     return render(request, 'passages/passage_list.html', {'passages': passages})
-
+from passages import serializers
+from django.db import transaction
+from .importer import import_document
+from .pye_parser import PYEParseError
 
 def upload_document(request):
     parsed_content = None
@@ -85,8 +78,8 @@ def upload_document(request):
 
 def clean_file(self):
     file = self.cleaned_data.get('file')
-    if not file.name.endswith('.docx'):
-        raise forms.ValidationError('Only .docx files are supported.')
+    if not file.name.endswith(('.docx', '.pdf')):
+        raise forms.ValidationError('Only .docx and .pdf files are supported.')
     return file
 
 
@@ -94,57 +87,75 @@ def uploaded_documents_list(request):
     documents = UploadedDocument.objects.all()
     return render(request, 'passages/document_list.html', {'documents': documents})
 
-
 class UploadedDocumentViewSet(viewsets.ModelViewSet):
     authentication_classes = [CsrfExemptSessionAuthentication]
     queryset = UploadedDocument.objects.all().order_by('-uploaded_at')
     serializer_class = UploadedDocumentSerializer
 
-    def perform_create(self, serializer):
-        uploader = self.request.user if self.request.user.is_authenticated else None
-        instance = serializer.save(uploader=uploader)
-        file_extension = os.path.splitext(instance.file.name)[1].lower()
-        if file_extension not in SUPPORTED_EXTENSIONS:
-            instance.delete()
-            supported = ", ".join(sorted(SUPPORTED_EXTENSIONS))
-            raise ValidationError({"file": f"Unsupported file type. Please upload one of: {supported}."})
+    def get_queryset(self):
+        """Filter by ?grade_level=&program=&difficulty=&topic=&skill_category=&search="""
+        queryset = super().get_queryset()
+        params = self.request.query_params
 
-        # Read the uploaded document safely into memory
-        with instance.file.open('rb') as fh:
-            data = fh.read()
+        for field in ('grade_level', 'skill_category', 'topic'):
+            value = params.get(field)
+            if value:
+                queryset = queryset.filter(**{f'{field}_id': value})
 
-        # Parse the PYE format: passage + questions + choices + answer key
-        try:
-            parsed = parse_pye(extract_paragraphs(io.BytesIO(data), file_name=instance.file.name))
-            problems = validate(parsed)
-            if problems:
-                raise PYEParseError(format_validation_errors(problems))
-        except PYEParseError as exc:
-            instance.delete()
-            raise ValidationError({"file": str(exc)})
-        print(f"PARSED {len(parsed.questions)} questions from '{instance.title}'")
+        for field in ('program', 'difficulty'):
+            value = params.get(field)
+            if value:
+                queryset = queryset.filter(**{field: value})
 
-        # Save the reading passage onto the document
-        instance.parsed_text = parsed.passage
-        instance.save(update_fields=['parsed_text'])
+        topic_name = params.get('topic_name')
+        if topic_name:
+            queryset = queryset.filter(topic__name__iexact=topic_name)
 
-        # Create the quiz questions, choices, and explanations
-        for q in parsed.questions:
-            question = QuizQuestion.objects.create(
-                document=instance,
-                question_text=q.text,
-                explanation=q.explanation,
+        search = params.get('search')
+        if search:
+            queryset = queryset.filter(title__icontains=search)
+
+        return queryset
+    
+    def create(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return Response(
+                {"detail": "You must be logged in to upload documents."},
+                status=status.HTTP_401_UNAUTHORIZED,
             )
-            for c in q.choices:
-                QuizAnswer.objects.create(
-                    question=question,
-                    choice_letter=c.letter,
-                    choice_text=c.text,
-                    is_correct=c.is_correct,
-                )
 
-    # Removed detail action due to decorator conflicts
+        profile = getattr(request.user, 'profile', None)
+        if not (profile and profile.role == 'teacher'):
+            return Response(
+                {"detail": "Only teacher accounts can upload documents."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
+        return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        user = self.request.user if self.request.user.is_authenticated else None
+        file_obj = self.request.FILES.get('file')
+
+        if not file_obj or not file_obj.name.endswith(('.docx', '.pdf')):
+            raise ValidationError("Invalid file format. Only .docx and .pdf files are permitted.")
+
+        with transaction.atomic():
+            instance = serializer.save(uploader=user)
+
+            if instance.file:
+                try:
+                    print(f"Running PYE Parser on {instance.file.name}")
+                    import_document(instance)  # parse, validate, and save in one call
+                    print("Successfully parsed and saved document data.")
+                except PYEParseError as e:
+                    print(f"Parser failed: {e}")
+                    raise ValidationError(f"Document Error: {str(e)}")
+                except Exception as e:
+                    print(f"Unexpected parser error: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    raise ValidationError(f"Document Error: {str(e)}")
 
 class DocumentDetailView(APIView):
     def get(self, request, pk):
@@ -173,6 +184,28 @@ class QuizResponseViewSet(viewsets.ModelViewSet):
     queryset = QuizResponse.objects.all()
     serializer_class = QuizResponseSerializer
 
+class StudentDashboardView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        responses = (
+            QuizResponse.objects
+            .filter(user=request.user)
+            .select_related(
+                'document',
+                'document__grade_level',
+                'document__skill_category',
+            )
+            .order_by('-submitted_at')
+        )
+
+        serializer = StudentDashboardSerializer(
+            responses,
+            many=True
+        )
+
+        return Response(serializer.data)
+
 
 class SubmitQuizView(APIView):
     def post(self, request):
@@ -181,6 +214,13 @@ class SubmitQuizView(APIView):
             document_id = data.get('document_id')
             user_name = data.get('user_name', 'Anonymous')
             answers = data.get('answers', [])
+            time_spent = data.get('time_spent', 0)
+
+            authenticated_user = (
+                request.user
+                if request.user.is_authenticated
+                else None
+            )
 
             document = get_object_or_404(UploadedDocument, id=document_id)
             questions = QuizQuestion.objects.filter(document=document)
@@ -216,7 +256,13 @@ class SubmitQuizView(APIView):
             # Create quiz response
             quiz_response = QuizResponse.objects.create(
                 document=document,
-                user_name=user_name,
+                user=authenticated_user,
+                user_name=(
+                    authenticated_user.username
+                     if authenticated_user
+                     else user_name
+                ),
+                duration_seconds=time_spent,
                 score=score,
                 total_questions=total_questions
             )
@@ -252,6 +298,18 @@ class GradeLevelViewSet(viewsets.ModelViewSet):
 class SkillCategoryViewSet(viewsets.ModelViewSet):
     queryset = SkillCategory.objects.all()
     serializer_class = SkillCategorySerializer
+
+
+class ClassroomViewSet(viewsets.ModelViewSet):
+    authentication_classes = [CsrfExemptSessionAuthentication]
+    serializer_class = ClassroomSerializer
+    permission_classes = [IsAuthenticated, IsTeacher]
+
+    def get_queryset(self):
+        return Classroom.objects.filter(teacher=self.request.user).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        serializer.save(teacher=self.request.user)
 
 
 def generate_questions_for_document(request, document_id):

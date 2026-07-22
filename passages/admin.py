@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
-    UploadedDocument, GradeLevel, SkillCategory, 
-    QuizQuestion, QuizAnswer, QuizResponse, UserAnswer
+    UploadedDocument, GradeLevel, SkillCategory,
+    QuizQuestion, QuizAnswer, QuizResponse, UserAnswer, Profile, Classroom, Topic
 )
 
 @admin.register(GradeLevel)
@@ -14,10 +14,16 @@ class SkillCategoryAdmin(admin.ModelAdmin):
     list_display = ['name']
     search_fields = ['name']
 
+@admin.register(Topic)
+class TopicAdmin(admin.ModelAdmin):
+    list_display = ['name']
+    search_fields = ['name']
+
 @admin.register(UploadedDocument)
 class UploadedDocumentAdmin(admin.ModelAdmin):
-    list_display = ['title', 'uploaded_at', 'grade_level', 'skill_category']
-    list_filter = ['uploaded_at', 'grade_level', 'skill_category']
+    list_display = ['title', 'uploaded_at', 'grade_level', 'program', 'difficulty', 'topic', 'skill_category']
+    list_filter = ['uploaded_at', 'grade_level', 'program', 'difficulty', 'topic', 'skill_category']
+    list_editable = ['grade_level', 'program', 'difficulty', 'topic', 'skill_category']
     search_fields = ['title', 'parsed_text']
     readonly_fields = ['uploaded_at']
 
@@ -46,3 +52,15 @@ class UserAnswerAdmin(admin.ModelAdmin):
     list_display = ['response', 'question', 'selected_answer', 'is_correct']
     list_filter = ['is_correct', 'response__document']
     search_fields = ['response__user_name', 'question__question_text']
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ['user', 'role']
+    list_filter = ['role']
+    search_fields = ['user__username', 'user__email']
+
+@admin.register(Classroom)
+class ClassroomAdmin(admin.ModelAdmin):
+    list_display = ['name', 'teacher', 'created_at']
+    list_filter = ['created_at']
+    search_fields = ['name', 'teacher__username']

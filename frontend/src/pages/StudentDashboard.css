@@ -1,0 +1,339 @@
+
+.student-dashboard {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 110px 24px 50px;
+}
+
+.student-dashboard-header {
+  background: #ffffff;
+  border: 2px solid #9b51e0;
+  padding: 28px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.student-dashboard-header h1 {
+  margin: 0 0 8px;
+  font-size: 2rem;
+}
+
+.student-dashboard-header p {
+  margin: 0;
+  color: #666666;
+}
+
+.student-dashboard-content {
+  background: #ffffff;
+  border: 2px solid #9b51e0;
+  padding: 28px;
+}
+
+.student-dashboard-content h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.dashboard-table-wrapper {
+  overflow-x: auto;
+}
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+  padding: 14px;
+  text-align: left;
+  border-bottom: 1px solid #dddddd;
+}
+
+.dashboard-table th {
+  background: #f7f4ff;
+  font-weight: 700;
+}
+
+.dashboard-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.dashboard-empty {
+  padding: 30px;
+  text-align: center;
+  color: #666666;
+  border: 1px solid #dddddd;
+}
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: #ffffff;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  border-color: #9b51e0;
+}
+
+.stat-card h3 {
+  margin: 0 0 12px 0;
+  font-size: 1.1rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #9b51e0;
+}
+
+.weak-skill-card {
+  border-color: #f59e0b; 
+  background: #fffbeb; 
+}
+
+.weak-skill-card:hover {
+  border-color: #d97706;
+}
+
+.skill-name {
+  font-size: 1.5rem;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.skill-bar-bg {
+  background: #fde68a;
+  height: 12px;
+  border-radius: 6px;
+  margin: 12px 0;
+  overflow: hidden;
+  width: 100%;
+}
+
+.skill-bar-fill {
+  background: #f59e0b;
+  height: 100%;
+  transition: width 1s ease-in-out;
+}
+
+.skill-subtext {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #d97706;
+  font-weight: 600;
+}
+
+@media (max-width: 700px) {
+  .student-dashboard {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .student-dashboard-content {
+    padding: 16px;
+  }
+}
+
+.student-dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 110px 24px 50px;
+}
+
+.student-dashboard-header {
+  position: relative;
+  overflow: hidden;
+  padding: 34px;
+  text-align: center;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 73, 169, 0.08),
+      rgba(121, 87, 255, 0.1),
+      rgba(79, 172, 254, 0.08)
+    );
+  border: 2px solid #9b51e0;
+  border-radius: 20px;
+  margin-bottom: 28px;
+}
+
+.student-dashboard-header h1 {
+  margin: 0 0 8px;
+  font-size: 2.2rem;
+  color: #29243a;
+}
+
+.student-dashboard-header p {
+  margin: 0;
+  color: #6c667d;
+  font-size: 1rem;
+}
+
+.student-dashboard-content {
+  padding: 28px;
+  background: #ffffff;
+  border: 2px solid #ece7ff;
+  border-radius: 20px;
+  box-shadow: 0 10px 28px rgba(71, 55, 130, 0.08);
+}
+
+.student-dashboard-content h2 {
+  margin-top: 0;
+  color: #29243a;
+}
+
+.dashboard-table-wrapper {
+  overflow-x: auto;
+  border-radius: 16px;
+  border: 1px solid #ece8f7;
+}
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+.dashboard-table th {
+  padding: 16px 14px;
+  text-align: left;
+  background: #f8f6ff;
+  color: #514b62;
+  font-size: 0.9rem;
+  border-bottom: 1px solid #e5e0f3;
+}
+
+.dashboard-table td {
+  padding: 17px 14px;
+  border-bottom: 1px solid #f0edf6;
+  vertical-align: middle;
+}
+
+.dashboard-table tbody tr {
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.dashboard-table tbody tr:hover {
+  background: #fcfbff;
+}
+
+.dashboard-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.test-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.test-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f0eaff, #e6f1ff);
+  font-size: 1.25rem;
+}
+
+.test-name-cell strong {
+  display: block;
+  color: #29243a;
+  margin-bottom: 3px;
+}
+
+.test-name-cell small {
+  color: #8a8498;
+}
+
+.dashboard-badge,
+.score-badge {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.grade-badge {
+  color: #5d3fc0;
+  background: #efeaff;
+}
+
+.skill-badge {
+  color: #b65a17;
+  background: #fff1dc;
+}
+
+.time-badge {
+  color: #156b9d;
+  background: #e4f5ff;
+}
+
+.date-badge {
+  color: #5d6470;
+  background: #f0f2f5;
+}
+
+.score-high {
+  color: #17743c;
+  background: #dcf7e7;
+}
+
+.score-medium {
+  color: #a46005;
+  background: #fff0cb;
+}
+
+.score-low {
+  color: #b83c4c;
+  background: #ffe2e6;
+}
+
+.dashboard-empty {
+  padding: 36px;
+  text-align: center;
+  color: #716b7d;
+  background: #faf9ff;
+  border: 1px dashed #cfc5ed;
+  border-radius: 16px;
+}
+
+@media (max-width: 700px) {
+  .student-dashboard {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .student-dashboard-content {
+    padding: 16px;
+  }
+
+  .student-dashboard-header h1 {
+    font-size: 1.8rem;
+  }
+}

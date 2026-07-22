@@ -14,40 +14,69 @@ class SkillCategory(models.Model):
     def __str__(self):
         return self.name
 
-# class Passage(models.Model): 
-#     title = models.CharField(max_length=255) #passage title
-#     text = models.TextField() #the text
-#     uploader = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
-#     grade_level = models.ForeignKey(GradeLevel, on_delete=models.CASCADE, default=1) 
-#     skill_category = models.ForeignKey(SkillCategory, on_delete=models.CASCADE, default=1)  # we'll create ID 1
+class Profile(models.Model):
+    ROLE_TEACHER = 'teacher'
+    ROLE_STUDENT = 'student'
+    ROLE_CHOICES = [
+        (ROLE_TEACHER, 'Teacher'),
+        (ROLE_STUDENT, 'Student'),
+    ]
 
-#     def __str__(self):
-#         return self.title #return title
-    
-# class Question(models.Model):
-#     passage = models.ForeignKey('Passage', on_delete=models.CASCADE,)
-#     question_text = models.TextField()
-#     correct_choice = models.CharField(max_length=1)
-#     explanation =  models.TextField()
-    
-#     def __str__(self):
-#         return self.question_text
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default=ROLE_STUDENT)
 
-# class AnswerChoice(models.Model):
-#     question =  models.ForeignKey(Question, on_delete=models.CASCADE,)
-#     choice_letter = models.CharField(max_length=1)
-#     choice_text = models.TextField()
+    def __str__(self):
+        return f"{self.user.username} ({self.role})"
 
-#     def __str__(self):
-#         return self.choice_letter
+class Classroom(models.Model):
+    name = models.CharField(max_length=255)
+    teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='classrooms')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+class Topic(models.Model):
+    name = models.CharField(max_length=120, unique=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
     
 class UploadedDocument(models.Model):
+    PROGRAM_STANDARD = 'standard'
+    PROGRAM_SHSAT = 'shsat'
+    PROGRAM_SAT = 'sat'
+    PROGRAM_CHOICES = [
+        (PROGRAM_STANDARD, 'Standard Reading'),
+        (PROGRAM_SHSAT, 'SHSAT'),
+        (PROGRAM_SAT, 'SAT Reading & Writing'),
+    ]
+
+    DIFFICULTY_EASY = 'easy'
+    DIFFICULTY_MEDIUM = 'medium'
+    DIFFICULTY_HARD = 'hard'
+    DIFFICULTY_CHOICES = [
+        (DIFFICULTY_EASY, 'Easy'),
+        (DIFFICULTY_MEDIUM, 'Medium'),
+        (DIFFICULTY_HARD, 'Hard'),
+    ]
+
     title = models.CharField(max_length=255)
     file = models.FileField(upload_to='documents/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
     parsed_text = models.TextField(blank=True, null=True)
     grade_level = models.ForeignKey(GradeLevel, on_delete=models.CASCADE, null=True, blank=True)
     skill_category = models.ForeignKey(SkillCategory, on_delete=models.CASCADE, null=True, blank=True)
+    program = models.CharField(
+        max_length=20, choices=PROGRAM_CHOICES, default=PROGRAM_STANDARD, blank=True
+    )
+    difficulty = models.CharField(
+        max_length=10, choices=DIFFICULTY_CHOICES, blank=True
+    )
+    topic = models.ForeignKey(Topic, on_delete=models.SET_NULL, null=True, blank=True)
     uploader = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
@@ -78,6 +107,7 @@ class QuizResponse(models.Model):
     score = models.IntegerField()
     total_questions = models.IntegerField()
     submitted_at = models.DateTimeField(auto_now_add=True)
+    duration_seconds = models.IntegerField(default=0, help_text="Time taken in seconds")
 
     def __str__(self):
         return f"{self.document.title} - {self.score}/{self.total_questions}"

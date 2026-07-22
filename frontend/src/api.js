@@ -41,7 +41,7 @@ upload: (formData) => api.post('documents/', formData, {
 }),
  
   // Update document
-  update: (id, data) => api.put(`/documents/${id}/`, data),
+  update: (id, data) => api.patch(`/documents/${id}/`, data),
   
   // Delete document
   delete: (id) => api.delete(`/documents/${id}/`),
@@ -59,7 +59,7 @@ export const questionsAPI = {
   create: (data) => api.post('/questions/', data),
   
   // Update question
-  update: (id, data) => api.put(`/questions/${id}/`, data),
+  update: (id, data) => api.patch(`/questions/${id}/`, data),
   
   // Delete question
   delete: (id) => api.delete(`/questions/${id}/`),
@@ -74,7 +74,7 @@ export const answersAPI = {
   create: (data) => api.post('/answers/', data),
   
   // Update answer
-  update: (id, data) => api.put(`/answers/${id}/`, data),
+  update: (id, data) => api.patch(`/answers/${id}/`, data),
   
   // Delete answer
   delete: (id) => api.delete(`/answers/${id}/`),
@@ -90,6 +90,16 @@ export const quizAPI = {
   
   // Get response by ID
   getResponse: (id) => api.get(`/responses/${id}/`),
+
+  // Get student dashboard data
+  getStudentDashboard: () => api.get('/student-dashboard/'),
+};
+
+// Classrooms API (teacher only)
+export const classroomsAPI = {
+  getAll: () => api.get('/classrooms/'),
+  create: (data) => api.post('/classrooms/', data),
+  delete: (id) => api.delete(`/classrooms/${id}/`),
 };
 
 // Grade Levels API

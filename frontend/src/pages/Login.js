@@ -25,22 +25,27 @@ const Login = () => {
       const loginResponse = await authAPI.login({ username, password });
       const user = loginResponse.data?.user;
       
-      if (!loginResponse.data?.success || !user) {
-        throw new Error(loginResponse.data?.error || 'Login failed.');
-      }
+      // Get user profile after successful login
+      const userResponse = await authAPI.me();
+      const profile = userResponse.data?.user || {};
 
+      // Store authentication data in localStorage
+      localStorage.setItem('authToken', 'authenticated'); // You can store actual token if you have one
       localStorage.setItem('user', JSON.stringify({
-        id: user.id,
-        username: user.username,
-        email: user.email,
+        username: profile.username || username,
+        id: profile.id,
+        email: profile.email,
+        role: profile.role || 'student',
       }));
-      localStorage.setItem('authToken', 'authenticated');
-      
-      window.dispatchEvent(new Event('authChange'));
+
+      // Dispatch custom event to notify navbar about authentication change
+      window.dispatchEvent(new Event('storage'));
+
+      // Show success message (optional)
       console.log('Login successful!');
-      
-      // Redirect to home page
-      navigate('/');
+
+      // Teachers land on their dashboard, students go home
+      navigate(profile.role === 'teacher' ? '/teacher/dashboard' : '/');
       
     } catch (err) {
       const data = err.response?.data;
@@ -77,6 +82,10 @@ const Login = () => {
           </button>
           {error && <p className="errorText">{error}</p>}
         </form>
+
+        <div style={{ textAlign: 'center', marginTop: '20px' }}>
+          <p>Don't have an account? <a href="/signup" style={{ color: '#007bff', textDecoration: 'none' }}>Sign up</a></p>
+        </div>
       </div>
     </div>
   );

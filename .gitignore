@@ -2,9 +2,10 @@
 venv/
 __pycache__/
 *.pyc
-node_modules/
-.env
 db.sqlite3
+media/
 .env
-media/documents/*.docx
-media/documents/*.pdf
+django.log
+frontend/react.log
+*.log
+cookies.txt
