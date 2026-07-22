@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from .models import (
     UploadedDocument, GradeLevel, SkillCategory,
-    QuizQuestion, QuizAnswer, QuizResponse, UserAnswer, Profile, Classroom
+    QuizQuestion, QuizAnswer, QuizResponse, UserAnswer, Profile, Classroom, Topic
 )
 
 class UserSerializer(serializers.ModelSerializer):
@@ -62,6 +62,12 @@ class UploadedDocumentSerializer(serializers.ModelSerializer):
     skill_category = serializers.PrimaryKeyRelatedField(
         queryset=SkillCategory.objects.all(), required=False, allow_null=True
     )
+    topic = serializers.PrimaryKeyRelatedField(
+        queryset=Topic.objects.all(), required=False, allow_null=True
+    )
+    topic_name = serializers.CharField(source='topic.name', read_only=True)
+    program_display = serializers.CharField(source='get_program_display', read_only=True)
+    difficulty_display = serializers.CharField(source='get_difficulty_display', read_only=True)
 
     class Meta:
         model = UploadedDocument

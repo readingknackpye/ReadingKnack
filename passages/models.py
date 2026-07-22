@@ -14,6 +14,7 @@ class SkillCategory(models.Model):
     def __str__(self):
         return self.name
 
+<<<<<<< HEAD
 class Profile(models.Model):
     ROLE_TEACHER = 'teacher'
     ROLE_STUDENT = 'student'
@@ -32,10 +33,21 @@ class Classroom(models.Model):
     name = models.CharField(max_length=255)
     teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='classrooms')
     created_at = models.DateTimeField(auto_now_add=True)
+=======
+class Topic(models.Model):
+    name = models.CharField(max_length=120, unique=True)
+
+    class Meta:
+        ordering = ['name']
+>>>>>>> 52131e5 (added topic model and program/difficulty field)
 
     def __str__(self):
         return self.name
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 52131e5 (added topic model and program/difficulty field)
 # class Passage(models.Model): 
 #     title = models.CharField(max_length=255) #passage title
 #     text = models.TextField() #the text
@@ -64,12 +76,37 @@ class Classroom(models.Model):
 #         return self.choice_letter
     
 class UploadedDocument(models.Model):
+    PROGRAM_STANDARD = 'standard'
+    PROGRAM_SHSAT = 'shsat'
+    PROGRAM_SAT = 'sat'
+    PROGRAM_CHOICES = [
+        (PROGRAM_STANDARD, 'Standard Reading'),
+        (PROGRAM_SHSAT, 'SHSAT'),
+        (PROGRAM_SAT, 'SAT Reading & Writing'),
+    ]
+
+    DIFFICULTY_EASY = 'easy'
+    DIFFICULTY_MEDIUM = 'medium'
+    DIFFICULTY_HARD = 'hard'
+    DIFFICULTY_CHOICES = [
+        (DIFFICULTY_EASY, 'Easy'),
+        (DIFFICULTY_MEDIUM, 'Medium'),
+        (DIFFICULTY_HARD, 'Hard'),
+    ]
+
     title = models.CharField(max_length=255)
     file = models.FileField(upload_to='documents/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
     parsed_text = models.TextField(blank=True, null=True)
     grade_level = models.ForeignKey(GradeLevel, on_delete=models.CASCADE, null=True, blank=True)
     skill_category = models.ForeignKey(SkillCategory, on_delete=models.CASCADE, null=True, blank=True)
+    program = models.CharField(
+        max_length=20, choices=PROGRAM_CHOICES, default=PROGRAM_STANDARD, blank=True
+    )
+    difficulty = models.CharField(
+        max_length=10, choices=DIFFICULTY_CHOICES, blank=True
+    )
+    topic = models.ForeignKey(Topic, on_delete=models.SET_NULL, null=True, blank=True)
     uploader = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
