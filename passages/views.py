@@ -76,8 +76,8 @@ def upload_document(request):
 
 def clean_file(self):
     file = self.cleaned_data.get('file')
-    if not file.name.endswith('.docx'):
-        raise forms.ValidationError('Only .docx files are supported.')
+    if not file.name.endswith(('.docx', '.pdf')):
+        raise forms.ValidationError('Only .docx and .pdf files are supported.')
     return file
 
 
@@ -107,17 +107,21 @@ class UploadedDocumentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user if self.request.user.is_authenticated else None
+        file_obj = self.request.FILES.get('file')
+
+        if not file_obj or not file_obj.name.endswith(('.docx', '.pdf')):
+            raise ValidationError("Invalid file format. Only .docx and .pdf files are permitted.")
 
         with transaction.atomic():
             instance = serializer.save(uploader=user)
 
-            if instance.file and instance.file.name.endswith('.docx'):
+            if instance.file:
                 try:
                     print(f"Running PYE Parser on {instance.file.name}")
                     import_document(instance)  # parse, validate, and save in one call
                     print("Successfully parsed and saved document data.")
                 except PYEParseError as e:
-                    print(f"Parser validation failed: {e}")
+                    print(f"Parser failed: {e}")
                     raise ValidationError(f"Document Error: {str(e)}")
                 except Exception as e:
                     print(f"Unexpected parser error: {e}")
@@ -182,12 +186,13 @@ class SubmitQuizView(APIView):
             document_id = data.get('document_id')
             user_name = data.get('user_name', 'Anonymous')
             answers = data.get('answers', [])
+            time_spent = data.get('time_spent', 0)
 
             authenticated_user = (
-    request.user
-    if request.user.is_authenticated
-    else None
-)
+                request.user
+                if request.user.is_authenticated
+                else None
+            )
 
             document = get_object_or_404(UploadedDocument, id=document_id)
             questions = QuizQuestion.objects.filter(document=document)
@@ -229,6 +234,7 @@ class SubmitQuizView(APIView):
                      if authenticated_user
                      else user_name
                 ),
+                duration_seconds=time_spent,
                 score=score,
                 total_questions=total_questions
             )

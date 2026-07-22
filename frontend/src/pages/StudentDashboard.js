@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { quizAPI } from '../api';
 import './StudentDashboard.css';
 
@@ -93,14 +92,45 @@ const getScoreClass = (percentage) => {
     );
   }
 
-  
-
   return (
     <main className="student-dashboard">
       <section className="student-dashboard-header">
         <h1>Student Dashboard</h1>
         <p>View your previous tests and performance.</p>
       </section>
+
+      {/* Stat Card Section */}
+      {stats && (
+        <section className="dashboard-stats">
+          <div className="stat-card">
+            <h3>Tests Completed</h3>
+            <p className="stat-value">{stats.totalTests}</p>
+          </div>
+          
+          <div className="stat-card">
+            <h3>Average Score</h3>
+            <p className="stat-value">{stats.avgScore}%</p>
+          </div>
+          
+          <div className="stat-card">
+            <h3>Total Reading Time</h3>
+            <p className="stat-value">{stats.formattedTotalTime}</p>
+          </div>
+
+          <div className="stat-card weak-skill-card">
+            <h3>Focus Area</h3>
+            <p className="stat-value skill-name">{stats.weakestSkill.name}</p>
+            <div className="skill-bar-bg">
+              {/* The progress bar width matches their average score in this skill */}
+              <div 
+                className="skill-bar-fill" 
+                style={{ width: `${stats.weakestSkill.avg}%` }}
+              ></div>
+            </div>
+            <p className="skill-subtext">{stats.weakestSkill.avg}% Average</p>
+          </div>
+        </section>
+      )}
 
       <section className="student-dashboard-content">
         <h2>Previous Tests</h2>

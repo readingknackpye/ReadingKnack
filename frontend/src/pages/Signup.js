@@ -16,6 +16,8 @@ const Signup = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isTeacher, setIsTeacher] = useState(false);
+  const [accessCode, setAccessCode] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -58,7 +60,8 @@ const Signup = () => {
         password: formData.password,
         password2: formData.password2,
         first_name: formData.first_name,
-        last_name: formData.last_name
+        last_name: formData.last_name,
+        access_code: accessCode
       });
 
       console.log('Signup response:', response);
@@ -194,6 +197,30 @@ const Signup = () => {
             className="signupInput"
             required
           />
+          {/* Teacher Toggle */}
+          <div style={{ marginBottom: '15px', textAlign: 'left' }}>
+            <label style={{ cursor: 'pointer', fontWeight: 'bold' }}>
+              <input
+                type="checkbox"
+                checked={isTeacher}
+                onChange={(e) => setIsTeacher(e.target.checked)}
+                style={{ marginRight: '8px' }}
+              />
+              I am a Teacher
+            </label>
+          </div>
+
+          {/* Conditional Secret Code Input */}
+          {isTeacher && (
+            <input
+              type="text"
+              placeholder="Educator Access Code"
+              value={accessCode}
+              onChange={(e) => setAccessCode(e.target.value)}
+              className="logInInput" 
+              required={isTeacher}
+            />
+          )}
           
           <button
             className="signUpButton"

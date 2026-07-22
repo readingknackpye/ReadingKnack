@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { documentsAPI, quizAPI } from '../api';
+import { documentsAPI, quizAPI, authAPI } from '../api';
 import './Quiz.css';
 
 const Quiz = () => {
@@ -17,6 +17,9 @@ const Quiz = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [submitted, setSubmitted] = useState(false);
+  const [fontSize, setFontSize] = useState(1.1);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [timeElapsed, setTimeElapsed] = useState(0);
 
   // Mock data functions
   const getMockDocument = () => {
@@ -27,6 +30,22 @@ const Quiz = () => {
         content: `A passage about planets, stars, and space...`
       }
     });
+  };
+  // simple timer
+  useEffect(() => {
+    let timer;
+    if(!loading && !submitted){
+      timer = setInterval(() => {
+        setTimeElapsed(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [loading, submitted]);
+  // format timer into MM:SS
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const getMockQuestions = () => {
@@ -101,10 +120,14 @@ const Quiz = () => {
           getMockQuestions()
         ]);
       } else {
-        // Use real API calls - getDetail includes both document info and questions
-        const detailRes = await documentsAPI.getDetail(documentId);
+        // use real API calls to fetch document, questions, and current user concurrently
+        const [detailRes, userRes] = await Promise.all([
+          documentsAPI.getDetail(documentId),
+          authAPI.me().catch(() => ({ data: { user: null } })) // catch error just in case user isn't logged in
+        ]);
         documentRes = { data: detailRes.data };
         questionsRes = { data: { questions: detailRes.data.questions || [] } };
+        setCurrentUser(userRes.data.user);
       }
 
       setDocument(documentRes.data);
@@ -182,6 +205,7 @@ const Quiz = () => {
         response = await quizAPI.submit({
           document_id: parseInt(documentId),
           user_name: 'Anonymous', // You can add a username input field later
+          time_spent: timeElapsed,
           answers: answersArray
         });
 
@@ -288,12 +312,28 @@ const Quiz = () => {
           <p className="text-gray-600 mb-6">
             This passage doesn't have any quiz questions yet.
           </p>
-          <button
-            onClick={() => navigate(`/documents/${documentId}`)}
-            className="submit-button"
-          >
-            Back to Documents
-          </button>
+          
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
+            <button
+              onClick={() => navigate(`/documents/`)}
+              className="submit-button"
+              style={{ width: 'auto', margin: 0, background: '#6b7280' }} 
+            >
+              ← Back to Documents
+            </button>
+            
+            {/* ADMIN ONLY: Redirect to the Review page to add questions */}
+            {currentUser?.is_staff && (
+              <button
+                onClick={() => navigate(`/review/${documentId}`)}
+                className="submit-button"
+                style={{ width: 'auto', margin: 0 }}
+              >
+                + Add Questions
+              </button>
+            )}
+          </div>
+          
         </div>
       </div>
     );
@@ -309,15 +349,72 @@ const Quiz = () => {
       <div className="quiz-layout">
         {/* Left Column - Passage */}
         <div className="passage-section">
-          <h2 className="passage-title">{document?.title || "Passage Title"}</h2>
-          <div className="passage-box">
+          <div style = {{display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '1rem'}}>
+            <h2 className = "passage-title" style = {{marginBottom: 0}}>
+              {document?.title || "Passage Title"}
+            </h2>
+
+            <div style={{display: 'flex', gap: '8px'}}>
+              <button
+              onClick={() => setFontSize(prev => Math.max(prev - 0.1, 0.8))}
+              title="Decrease Size"
+              style={{ 
+                  color: '#333', 
+                  padding: '4px 12px', 
+                  background: '#88abf0', 
+                  border: '1px solid #d1d5db', 
+                  borderRadius: '4px', 
+                  cursor: 'pointer', 
+                  fontWeight: 'bold',
+                  fontSize: '1.1rem'
+                }}
+              >
+                A-
+              </button>
+              <button
+              onClick={() => setFontSize(prev => Math.min(prev + 0.1, 2.0))}
+              title="Increase Size"
+              style={{ 
+                  color: '#333', 
+                  padding: '4px 12px', 
+                  background: '#e79bde', 
+                  border: '1px solid #d1d5db', 
+                  borderRadius: '4px', 
+                  cursor: 'pointer', 
+                  fontWeight: 'bold', 
+                  fontSize: '1.1rem' 
+                }}
+              >
+                A+
+              </button>
+            </div>
+          </div>
+          <div
+          className="passage-box"
+          style={{ fontSize: `${fontSize}rem`, transition: 'font-size 0.2s ease' }}
+          >
             {passageText || "Passage"}
           </div>
         </div>
 
         {/* Right Column - Questions */}
         <div className="questions-section">
-          <h2 className="questions-title">Comprehension Questions</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h2 className="questions-title" style={{ margin: 0 }}>Comprehension Questions</h2>
+            <div style={{ fontWeight: 'bold', color: '#666', background: '#f3f4f6', padding: '4px 12px', borderRadius: '16px' }}>
+              ⏱ {formatTime(timeElapsed)}
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div style={{ width: '100%', height: '8px', background: '#e5e7eb', borderRadius: '4px', marginBottom: '2rem', overflow: 'hidden' }}>
+            <div style={{ 
+              height: '100%', 
+              background: 'linear-gradient(90deg, var(--rk-pink), var(--rk-purple))',
+              width: `${(Object.keys(answers).length / questions.length) * 100}%`,
+              transition: 'width 0.3s ease'
+            }} />
+          </div>
 
           <div className="question-item">
             <div className="question-number">
