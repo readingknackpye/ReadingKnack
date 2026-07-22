@@ -113,6 +113,7 @@ class StudentDashboardSerializer(serializers.ModelSerializer):
             'total_questions',
             'percentage',
             'duration',
+            'duration_seconds',
             'submitted_at',
         ]
 
