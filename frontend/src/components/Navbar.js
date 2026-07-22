@@ -153,8 +153,8 @@ const Navbar = () => {
               onClick={handleLogout}
               className="btn" 
               style={{
-                background: '#fff',
-                color: '#dc3545',
+                background: '#e13939',
+                color: '#f6eff0',
                 border: '2px solid #dc3545',
                 boxShadow: 'none',
               }}

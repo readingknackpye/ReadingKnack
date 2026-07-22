@@ -41,7 +41,8 @@ const UploadDocument = () => {
 const fetchCurrentUser = async () => {
   try {
     const response = await authAPI.me();
-    setCurrentUser(response.data);
+    const userData = response.data.user || response.data;
+    setCurrentUser(userData);
   } catch (err) {
     console.error('Failed to load current user:', err);
     setCurrentUser(null);

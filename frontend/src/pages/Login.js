@@ -81,6 +81,10 @@ const Login = () => {
           </button>
           {error && <p className="errorText">{error}</p>}
         </form>
+
+        <div style={{ textAlign: 'center', marginTop: '20px' }}>
+          <p>Don't have an account? <a href="/signup" style={{ color: '#007bff', textDecoration: 'none' }}>Sign up</a></p>
+        </div>
       </div>
     </div>
   );
