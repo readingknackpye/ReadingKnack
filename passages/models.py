@@ -35,6 +35,15 @@ class Classroom(models.Model):
 
     def __str__(self):
         return self.name
+
+class Topic(models.Model):
+    name = models.CharField(max_length=120, unique=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
     
 class UploadedDocument(models.Model):
     PROGRAM_STANDARD = 'standard'
