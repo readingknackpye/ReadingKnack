@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import (
-    UploadedDocument, GradeLevel, SkillCategory, 
+    UploadedDocument, GradeLevel, SkillCategory, Topic,
     QuizQuestion, QuizAnswer, QuizResponse, UserAnswer
 )
 
@@ -14,10 +14,16 @@ class SkillCategoryAdmin(admin.ModelAdmin):
     list_display = ['name']
     search_fields = ['name']
 
+@admin.register(Topic)
+class TopicAdmin(admin.ModelAdmin):
+    list_display = ['name']
+    search_fields = ['name']
+
 @admin.register(UploadedDocument)
 class UploadedDocumentAdmin(admin.ModelAdmin):
-    list_display = ['title', 'uploaded_at', 'grade_level', 'skill_category']
-    list_filter = ['uploaded_at', 'grade_level', 'skill_category']
+    list_display = ['title', 'uploaded_at', 'grade_level', 'program', 'difficulty', 'topic', 'skill_category']
+    list_filter = ['uploaded_at', 'grade_level', 'program', 'difficulty', 'topic', 'skill_category']
+    list_editable = ['grade_level', 'program', 'difficulty', 'topic', 'skill_category']
     search_fields = ['title', 'parsed_text']
     readonly_fields = ['uploaded_at']
 

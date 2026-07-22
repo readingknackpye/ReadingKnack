@@ -89,6 +89,31 @@ class UploadedDocumentViewSet(viewsets.ModelViewSet):
     authentication_classes = [CsrfExemptSessionAuthentication]
     queryset = UploadedDocument.objects.all().order_by('-uploaded_at')
     serializer_class = UploadedDocumentSerializer
+
+    def get_queryset(self):
+        """Filter by ?grade_level=&program=&difficulty=&topic=&skill_category=&search="""
+        queryset = super().get_queryset()
+        params = self.request.query_params
+
+        for field in ('grade_level', 'skill_category', 'topic'):
+            value = params.get(field)
+            if value:
+                queryset = queryset.filter(**{f'{field}_id': value})
+
+        for field in ('program', 'difficulty'):
+            value = params.get(field)
+            if value:
+                queryset = queryset.filter(**{field: value})
+
+        topic_name = params.get('topic_name')
+        if topic_name:
+            queryset = queryset.filter(topic__name__iexact=topic_name)
+
+        search = params.get('search')
+        if search:
+            queryset = queryset.filter(title__icontains=search)
+
+        return queryset
     
     def create(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
