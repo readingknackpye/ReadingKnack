@@ -404,7 +404,7 @@ const Quiz = () => {
             </button>
             
             {/* ADMIN ONLY: Redirect to the Review page to add questions */}
-            {currentUser?.is_staff && (
+            {currentUser?.role === 'teacher' && (
               <button
                 onClick={() => navigate(`/review/${documentId}`)}
                 className="submit-button"

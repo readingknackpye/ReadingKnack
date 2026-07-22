@@ -6,15 +6,11 @@ import {
   skillCategoriesAPI,
   authAPI,
 } from '../api';
-
-
 const SUPPORTED_FILE_EXTENSIONS = ['.docx', '.pdf'];
 const SUPPORTED_FILE_TYPES = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'application/pdf',
 ];
-
-
 const UploadDocument = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -32,12 +28,10 @@ const UploadDocument = () => {
   const [questions, setQuestions] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [userLoading, setUserLoading] = useState(true);
-
   useEffect(() => {
   fetchOptions();
   fetchCurrentUser();
 }, []);
-
 const fetchCurrentUser = async () => {
   try {
     const response = await authAPI.me();
@@ -50,7 +44,6 @@ const fetchCurrentUser = async () => {
     setUserLoading(false);
   }
 };
-
   const fetchOptions = async () => {
     try {
       const [gradeLevelsRes, skillCategoriesRes] = await Promise.all([
@@ -63,7 +56,6 @@ const fetchCurrentUser = async () => {
       console.error('Error fetching options:', err);
     }
   };
-
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -73,7 +65,6 @@ const fetchCurrentUser = async () => {
       setDragActive(false);
     }
   };
-
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -83,12 +74,10 @@ const fetchCurrentUser = async () => {
       handleFileSelect(e.dataTransfer.files[0]);
     }
   };
-
   const handleFileSelect = (file) => {
     const fileName = file?.name?.toLowerCase() || '';
     const hasSupportedExtension = SUPPORTED_FILE_EXTENSIONS.some(ext => fileName.endsWith(ext));
     const hasSupportedType = SUPPORTED_FILE_TYPES.includes(file?.type);
-
     if (!hasSupportedExtension && !hasSupportedType) {
       setError('Please select a .docx or .pdf file');
       return;
@@ -98,49 +87,39 @@ const fetchCurrentUser = async () => {
       setError('File size must be less than 10MB');
       return;
     }
-
     setFormData(prev => ({ ...prev, file }));
     setError('');
   };
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (userLoading) {
     setError('Please wait while your account permissions are being checked.');
     return;
   }
-
   if (!currentUser) {
     setError('You must be logged in to upload documents.');
     return;
   }
-
-  if (!currentUser.is_staff) {
-    setError('Only administrators can upload documents.');
+  if (currentUser.role !== 'teacher') {
+    setError('Only teachers can upload documents.');
     return;
   }
-
     if (!formData.title.trim()) {
       setError('Please enter a title');
       return;
     }
-
     if (!formData.file) {
       setError('Please select a file');
       return;
     }
-
     setLoading(true);
     setError('');
     setQuestions([]);
     setSuccess('');
-
     try {
       const uploadData = new FormData();
       uploadData.append('title', formData.title);
@@ -151,12 +130,10 @@ const fetchCurrentUser = async () => {
       if (formData.skill_category) {
         uploadData.append('skill_category', formData.skill_category);
       }
-
       // Step 1: Upload the document
       const response = await documentsAPI.upload(uploadData);
       const docId = response.data.id;
       setSuccess('Document uploaded successfully!');
-
       // Redirect to library page after a short delay
       setTimeout(() => {
         navigate(`/review/${docId}`);
@@ -172,19 +149,16 @@ const fetchCurrentUser = async () => {
       setLoading(false);
     }
   };
-
   const removeFile = () => {
     setFormData(prev => ({ ...prev, file: null }));
     setError('');
   };
-
   return (
     <div className="upload-container">
       {/* Header */}
       <div className="upload-header">
         <p className="upload-subtitle"> </p>
       </div>
-
       {/* Upload Form */}
       <div className="card" style={{ width: '100%', minWidth: 'min(100%, 500px)', maxWidth: '600px', margin: '0 auto' }}>
         <form onSubmit={handleSubmit}>
@@ -202,7 +176,6 @@ const fetchCurrentUser = async () => {
               required
             />
           </div>
-
           {/* File Upload */}
           <div className="form-group">
             <label className="form-label">Document File *</label>
@@ -252,7 +225,6 @@ const fetchCurrentUser = async () => {
               )}
             </div>
           </div>
-
           {/* Grade Level */}
           <div className="form-group">
             <label htmlFor="grade_level" className="form-label">Grade Level</label>
@@ -269,7 +241,6 @@ const fetchCurrentUser = async () => {
               ))}
             </select>
           </div>
-
           {/* Skill Category */}
           <div className="form-group">
             <label htmlFor="skill_category" className="form-label">Skill Category</label>
@@ -286,28 +257,25 @@ const fetchCurrentUser = async () => {
               ))}
             </select>
           </div>
-
           {/* Error and Success Messages */}
           {error && <div className="error-message">{error}</div>}
           {success && <div className="success-message">{success}</div>}
-
           {/* Submit Button */}
           <div className="form-group">
             <button
-  type="submit"
-  disabled={loading || userLoading}
-  className="btn btn-primary submit-btn"
->
-  {userLoading
-    ? 'Checking Permissions...'
-    : loading
-      ? 'Uploading...'
-      : 'Upload Document'}
-</button>
+              type="submit"
+              disabled={loading || userLoading}
+              className="btn btn-primary submit-btn"
+            >
+              {userLoading
+                ? 'Checking Permissions...'
+                : loading
+                  ? 'Uploading...'
+                  : 'Upload Document'}
+            </button>
           </div>
         </form>
       </div>
-
       {/* Generated Questions */}
       {questions.length > 0 && (
         <div className="generated-questions">
@@ -324,5 +292,4 @@ const fetchCurrentUser = async () => {
     </div>
   );
 };
-
 export default UploadDocument;
