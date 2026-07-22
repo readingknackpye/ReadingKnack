@@ -32,6 +32,47 @@ const StudentDashboard = () => {
     loadDashboard();
   }, []);
 
+  const formatDuration = (seconds) => {
+  if (!seconds || seconds <= 0) {
+    return 'N/A';
+  }
+
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+
+  if (minutes === 0) {
+    return `${remainingSeconds} sec`;
+  }
+
+  return `${minutes} min ${remainingSeconds} sec`;
+};
+
+const formatDate = (dateValue) => {
+  if (!dateValue) {
+    return 'N/A';
+  }
+
+  return new Date(dateValue).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
+
+const getScoreClass = (percentage) => {
+  const numericScore = Number(percentage || 0);
+
+  if (numericScore >= 80) {
+    return 'score-high';
+  }
+
+  if (numericScore >= 60) {
+    return 'score-medium';
+  }
+
+  return 'score-low';
+};
+
   if (loading) {
     return (
       <main className="student-dashboard">
@@ -72,35 +113,67 @@ const StudentDashboard = () => {
           <div className="dashboard-table-wrapper">
             <table className="dashboard-table">
               <thead>
-                <tr>
-                  <th>Test Name</th>
-                  <th>Grade Level</th>
-                  <th>Skill</th>
-                  <th>Time Spent</th>
-                  <th>Score</th>
-                  <th>Completed At</th>
-                </tr>
-              </thead>
+  <tr>
+    <th>📚 Test</th>
+    <th>🎓 Grade Level</th>
+    <th>⭐ Skill</th>
+    <th>⏱️ Time</th>
+    <th>🏆 Score</th>
+    <th>📅 Date</th>
+  </tr>
+</thead>
 
   
 
               <tbody>
   {testHistory.map((test) => (
     <tr key={test.id}>
-      <td>{test.test_name || 'N/A'}</td>
-      <td>{test.grade_level || 'N/A'}</td>
-      <td>{test.skill || 'N/A'}</td>
-      <td>{test.duration || 'N/A'}</td>
       <td>
-        {test.score ?? 'N/A'} / {test.total_questions ?? 'N/A'}
-        {test.percentage !== undefined
-          ? ` (${test.percentage}%)`
-          : ''}
+        <div className="test-name-cell">
+          <span className="test-icon">📘</span>
+
+          <div>
+            <strong>{test.test_name || 'N/A'}</strong>
+            <small>Reading Quiz</small>
+          </div>
+        </div>
       </td>
+
       <td>
-        {test.submitted_at
-          ? new Date(test.submitted_at).toLocaleString()
-          : 'N/A'}
+        <span className="dashboard-badge grade-badge">
+          🎓 {test.grade_level || 'N/A'}
+        </span>
+      </td>
+
+      <td>
+        <span className="dashboard-badge skill-badge">
+          ⭐ {test.skill || 'N/A'}
+        </span>
+      </td>
+
+      <td>
+        <span className="dashboard-badge time-badge">
+          ⏱️ {formatDuration(test.duration_seconds)}
+        </span>
+      </td>
+
+      <td>
+        <span
+          className={`score-badge ${getScoreClass(
+            test.percentage
+          )}`}
+        >
+          {test.score ?? 'N/A'} / {test.total_questions ?? 'N/A'}
+          {test.percentage !== undefined
+            ? ` • ${test.percentage}%`
+            : ''}
+        </span>
+      </td>
+
+      <td>
+        <span className="dashboard-badge date-badge">
+          📅 {formatDate(test.submitted_at)}
+        </span>
       </td>
     </tr>
   ))}
