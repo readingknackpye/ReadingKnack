@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('passages', '0009_remove_passage_grade_level_and_more'),
+        ('passages', '0010_quizresponse_duration_seconds'),
     ]
 
     operations = [

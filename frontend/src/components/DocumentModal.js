@@ -58,11 +58,34 @@ const DocumentModal = ({ isOpen, onClose, documentId, documentTitle }) => {
               <p>Loading document...</p>
             </div>
           ) : error ? (
-            <div className="error-container">
-              <p className="error-message">{error}</p>
-              <button className="btn btn-primary" onClick={fetchDocument}>
-                Try Again
-              </button>
+            <div className="error-container" style={{ textAlign: 'center', padding: '2rem' }}>
+              <p className="error-message" style={{ color: '#ef4444', marginBottom: '1.5rem', fontWeight: 'bold' }}>
+                {error}
+              </p>
+              
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                {/* If the error string contains auth-related words, push them to Login */}
+                {error.toLowerCase().includes('log') || error.toLowerCase().includes('auth') || error.toLowerCase().includes('credential') ? (
+                  <>
+                    <button className="btn btn-primary" onClick={() => navigate('/login')}>
+                      Log In to Continue
+                    </button>
+                    <button className="btn btn-secondary" onClick={() => navigate('/')}>
+                      Back to Home
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {/* If it's a normal error, so show Try Again */}
+                    <button className="btn btn-primary" onClick={fetchDocument}>
+                      Try Again
+                    </button>
+                    <button className="btn btn-secondary" onClick={() => navigate('/documents')}>
+                      Back to Library
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           ) : document ? (
             <div className="document-content">

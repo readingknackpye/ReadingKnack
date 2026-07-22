@@ -120,12 +120,27 @@ const Navbar = () => {
           </span>
           <span style={{ color: 'var(--rk-dark)', fontWeight: 700, fontSize: '1.5rem', marginLeft: 2 }}>.com</span>
         </Link>
-        <Link to="/upload" className="btn" style={{ marginRight: 8 }}>Upload</Link>
-        <Link to="/documents" className="btn" style={{ marginRight: 8 }}>Documents</Link>
+        <Link to="/upload" className="btn" style={{ marginRight: 8 }}>
+          Upload
+        </Link>
+
+        <Link to="/documents" className="btn" style={{ marginRight: 8 }}>
+          Documents
+        </Link>
+
         {isAuthenticated && role === 'teacher' && (
-          <Link to="/teacher/dashboard" className="btn" style={{ marginRight: 8 }}>Dashboard</Link>
+          <Link to="/teacher/dashboard" className="btn" style={{ marginRight: 8 }}>
+            Dashboard
+          </Link>
         )}
-        <Link to="/profile" className="btn">Profile</Link>
+
+        <Link to="/profile" className="btn" style={{ marginRight: 8 }}>
+          Profile
+        </Link>
+
+        <Link to="/student-dashboard" className="btn">
+          Student Dashboard
+        </Link>
       </div>
       
       <div style={{ 
@@ -148,8 +163,8 @@ const Navbar = () => {
               onClick={handleLogout}
               className="btn" 
               style={{
-                background: '#fff',
-                color: '#dc3545',
+                background: '#e13939',
+                color: '#f6eff0',
                 border: '2px solid #dc3545',
                 boxShadow: 'none',
               }}

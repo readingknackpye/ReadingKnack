@@ -100,6 +100,7 @@ class QuizResponse(models.Model):
     score = models.IntegerField()
     total_questions = models.IntegerField()
     submitted_at = models.DateTimeField(auto_now_add=True)
+    duration_seconds = models.IntegerField(default=0, help_text="Time taken in seconds")
 
     def __str__(self):
         return f"{self.document.title} - {self.score}/{self.total_questions}"

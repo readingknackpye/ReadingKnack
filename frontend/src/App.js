@@ -5,13 +5,15 @@ import Home from './pages/Home';
 import Upload from './pages/UploadDocument';
 import DocumentsList from './pages/DocumentList';
 import Quiz from './pages/Quiz';
-import Results from './pages/Results';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Profile from './pages/Profile';
+import Results from './pages/Results';
 import Navbar from './components/Navbar';
 import UploadDocument from './pages/UploadDocument';
 import TeacherDashboard from './pages/TeacherDashboard';
+import ReviewDocument from './pages/ReviewDocument';
+import StudentDashboard from './pages/StudentDashboard';
 
 function App() {
   return (
@@ -27,6 +29,8 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+        <Route path="/review/:documentId" element={<ReviewDocument />} />
+        <Route path="/student-dashboard" element={<StudentDashboard />} />
       </Routes>
     </Router>
   );

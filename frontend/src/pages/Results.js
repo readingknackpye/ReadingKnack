@@ -4,82 +4,83 @@ import './Results.css';
 
 const Results = () => {
   const location = useLocation();
+  // allows you to navigate through the app
   const navigate = useNavigate();
+  // state that is passed from quiz page to results page
   const { quizResult, document, questions, userAnswers } = location.state || {};
 
-  if (!quizResult || !questions) {
+  if (!quizResult) {
+    // if the user gets to the page without finishing quiz, it shows this page and return home
     return (
       <div className="results-container">
-        <div className="results-card">
-          <div className="results-empty">
-            <h2>No quiz results to show</h2>
-            <p>Take a quiz first to see your results here.</p>
-            <button className="results-button" onClick={() => navigate('/documents')}>
-              Browse Documents
-            </button>
-          </div>
-        </div>
+        <h2>No quiz results to show</h2>
+        <p>Looks like you got here without finishing a quiz.</p>
+        <button className = "submit-button"onClick={() => navigate('/')}>Back Home</button>
       </div>
     );
   }
 
-  const { score, total_questions: totalQuestions, percentage } = quizResult;
-
   return (
+    // this is the page it takes you to after you finish the quiz, shows your score
     <div className="results-container">
-      <div className="results-card">
-        <h1 className="results-title">Quiz Results</h1>
-        <div className="results-score">
-          You scored {score} / {totalQuestions} ({percentage}%)
-        </div>
-        {document?.title && <div className="results-subtitle">{document.title}</div>}
+      <div className="results-header">
+        <h2>Quiz Results</h2>
+        <p className="score">
+          You scored {quizResult.score} / {quizResult.total_questions} ({quizResult.percentage}%)
+        </p>
+        {document?.title && <h3 className="document-title">{document.title}</h3>}
+      </div>
 
-        <hr className="results-divider" />
-
+      <div className = "review-section">
         {questions.map((question, index) => {
-          const selectedAnswerId = userAnswers?.[question.id];
-          const selectedAnswer = question.answers?.find(
-            (answer) => String(answer.id) === String(selectedAnswerId)
-          );
-          const correctAnswer = question.answers?.find((answer) => answer.is_correct);
-          const isCorrect = Boolean(selectedAnswer?.is_correct);
+          const selectedAnswerId = userAnswers[question.id];
+          const selectedAnswer = question.answers.find(a => a.id === selectedAnswerId);
+          const correctAnswer = question.answers.find(a => a.is_correct)
+          const isCorrect = selectedAnswer?.is_correct;
 
           return (
-            <div
-              key={question.id}
-              className={`result-question ${isCorrect ? 'result-correct' : 'result-incorrect'}`}
-            >
-              <div className="result-question-text">
-                {index + 1}. {question.question_text}
-              </div>
+            <div key={question.id} className={`review-card ${isCorrect ? 'correct-card' : 'incorrect-card'}`}>
+              <h4 className="question-text">{index + 1}. {question.question_text}</h4>
 
-              <div className="result-answer-line">
-                Your answer:{' '}
-                {selectedAnswer
-                  ? `${selectedAnswer.choice_letter}. ${selectedAnswer.choice_text}`
-                  : 'No answer'}
-                <span className="result-icon">{isCorrect ? '✅' : '❌'}</span>
-              </div>
-
-              {!isCorrect && correctAnswer && (
-                <div className="result-correct-line">
-                  Correct Answer: {correctAnswer.choice_letter}. {correctAnswer.choice_text}
+              <div className="answers-comparison">
+                <div className="user-answer" style={{ marginBottom: '1rem' }}>
+                  <div style={{ marginBottom: '4px' }}>
+                    <strong>Your answer:</strong> {selectedAnswer ? `${selectedAnswer.choice_letter}.` : "None"}
+                  </div>
+                  {selectedAnswer && (
+                    <div style={{ marginLeft: '8px' }}>
+                      {selectedAnswer.choice_text} {isCorrect ? "✅" : "❌"}
+                    </div>
+                  )}
                 </div>
-              )}
 
+                {/* only show the correct answer line if they got it wrong */}
+                {!isCorrect && correctAnswer && (
+                  <div className="correct-answer">
+                    <div style={{ marginBottom: '4px' }}>
+                      <strong>Correct Answer:</strong> {correctAnswer.choice_letter}.
+                    </div>
+                    <div style={{ marginLeft: '8px' }}>
+                      {correctAnswer.choice_text}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* display the explanation from the parser */}
               {question.explanation && (
-                <div className="result-explanation">
-                  <strong>Explanation:</strong> {question.explanation}
-                </div>
+                <div className="explanation-box">
+                  <strong>Explanation: </strong> {question.explanation}
+                  </div>
               )}
             </div>
           );
         })}
-
-        <button className="results-button" onClick={() => navigate('/documents')}>
-          Back to Documents
-        </button>
       </div>
+
+      <button className="submit-button" onClick={() => navigate(`/documents`)}>
+        Back to Documents
+      </button>
     </div>
   );
 };

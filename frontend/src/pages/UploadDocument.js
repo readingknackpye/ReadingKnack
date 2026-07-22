@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { documentsAPI, gradeLevelsAPI, skillCategoriesAPI } from '../api';
+import {
+  documentsAPI,
+  gradeLevelsAPI,
+  skillCategoriesAPI,
+  authAPI,
+} from '../api';
+
+
+const SUPPORTED_FILE_EXTENSIONS = ['.docx', '.pdf'];
+const SUPPORTED_FILE_TYPES = [
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/pdf',
+];
+
 
 const UploadDocument = () => {
   const navigate = useNavigate();
@@ -17,10 +30,26 @@ const UploadDocument = () => {
   const [success, setSuccess] = useState('');
   const [dragActive, setDragActive] = useState(false);
   const [questions, setQuestions] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userLoading, setUserLoading] = useState(true);
 
   useEffect(() => {
-    fetchOptions();
-  }, []);
+  fetchOptions();
+  fetchCurrentUser();
+}, []);
+
+const fetchCurrentUser = async () => {
+  try {
+    const response = await authAPI.me();
+    const userData = response.data.user || response.data;
+    setCurrentUser(userData);
+  } catch (err) {
+    console.error('Failed to load current user:', err);
+    setCurrentUser(null);
+  } finally {
+    setUserLoading(false);
+  }
+};
 
   const fetchOptions = async () => {
     try {
@@ -56,8 +85,12 @@ const UploadDocument = () => {
   };
 
   const handleFileSelect = (file) => {
-    if (file.type !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-      setError('Please select a .docx file');
+    const fileName = file?.name?.toLowerCase() || '';
+    const hasSupportedExtension = SUPPORTED_FILE_EXTENSIONS.some(ext => fileName.endsWith(ext));
+    const hasSupportedType = SUPPORTED_FILE_TYPES.includes(file?.type);
+
+    if (!hasSupportedExtension && !hasSupportedType) {
+      setError('Please select a .docx or .pdf file');
       return;
     }
     
@@ -77,6 +110,21 @@ const UploadDocument = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (userLoading) {
+    setError('Please wait while your account permissions are being checked.');
+    return;
+  }
+
+  if (!currentUser) {
+    setError('You must be logged in to upload documents.');
+    return;
+  }
+
+  if (!currentUser.is_staff) {
+    setError('Only administrators can upload documents.');
+    return;
+  }
 
     if (!formData.title.trim()) {
       setError('Please enter a title');
@@ -107,15 +155,19 @@ const UploadDocument = () => {
       // Step 1: Upload the document
       const response = await documentsAPI.upload(uploadData);
       const docId = response.data.id;
-      setSuccess('Document uploaded successfully! Redirecting to quiz...');
+      setSuccess('Document uploaded successfully!');
 
-      // Redirect to quiz page after a short delay
+      // Redirect to library page after a short delay
       setTimeout(() => {
-        navigate(`/quiz/${docId}`);
+        navigate(`/review/${docId}`);
       }, 1500);
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.error || 'Failed to upload document');
+      const data = err.response?.data
+      const message = Array.isArray(data)
+        ? data[0]
+        : data?.error || data ?.detail || 'Failed to upload document';
+      setError(message)
     } finally {
       setLoading(false);
     }
@@ -134,7 +186,7 @@ const UploadDocument = () => {
       </div>
 
       {/* Upload Form */}
-      <div className="card">
+      <div className="card" style={{ width: '100%', minWidth: 'min(100%, 500px)', maxWidth: '600px', margin: '0 auto' }}>
         <form onSubmit={handleSubmit}>
           {/* Title Input */}
           <div className="form-group">
@@ -160,6 +212,7 @@ const UploadDocument = () => {
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
               onDrop={handleDrop}
+              style={{ minWidth: 'min(100%, 500px)', minHeight: '160px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
             >
               {formData.file ? (
                 <div className="file-selected">
@@ -174,29 +227,28 @@ const UploadDocument = () => {
                     type="button"
                     onClick={removeFile}
                     className="btn btn-secondary file-remove-btn"
+                    style={{ backgroundColor: '#dc3545', color: 'white' }}
                   >
                     ✕ Remove File
                   </button>
                 </div>
-              ) : (
-                <div className="file-drop-content">
-                  <span className="file-drop-icon">📁</span>
-                  <div>
-                    <p className="file-drop-text">
-                      Drop your .docx file here, or{' '}
-                      <label className="file-browse-link">
-                        browse
-                        <input
-                          type="file"
-                          accept=".docx"
-                          onChange={(e) => handleFileSelect(e.target.files[0])}
-                          className="hidden"
-                        />
-                      </label>
+              ) : (  
+                <label className="file-drop-content" style={{ cursor: 'pointer', display: 'block' }}>
+                  {/* being able to upload files by clicking content box not just label*/}
+                  <input 
+                    type="file" 
+                    accept=".docx,.pdf"
+                    onChange={(e) => handleFileSelect(e.target.files[0])} 
+                    className="hidden" 
+                  />
+                  <span className="file-drop-icon">📁</span> 
+                  <div> 
+                    <p className="file-drop-text"> 
+                      Drop your .docx or .pdf file here, or{' '}
+                      <span className="file-browse-link">browse</span>
                     </p>
-                    <p className="file-drop-hint">Only .docx files up to 10MB are supported</p>
                   </div>
-                </div>
+                </label>
               )}
             </div>
           </div>
@@ -242,12 +294,16 @@ const UploadDocument = () => {
           {/* Submit Button */}
           <div className="form-group">
             <button
-              type="submit"
-              disabled={loading}
-              className="btn btn-primary submit-btn"
-            >
-              {loading ? 'Uploading...' : 'Upload Document'}
-            </button>
+  type="submit"
+  disabled={loading || userLoading}
+  className="btn btn-primary submit-btn"
+>
+  {userLoading
+    ? 'Checking Permissions...'
+    : loading
+      ? 'Uploading...'
+      : 'Upload Document'}
+</button>
           </div>
         </form>
       </div>

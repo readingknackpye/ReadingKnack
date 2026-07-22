@@ -64,8 +64,7 @@ def extract_lines(document: DocxDocument) -> list[str]:
     for block in iter_block_items(document):
         if isinstance(block, Paragraph):
             text = _clean_text(block.text)
-            if text:
-                lines.append(text)
+            lines.append(text)
         else:
             lines.extend(_table_to_lines(block))
 
@@ -220,7 +219,9 @@ def parse_document(document: DocxDocument) -> ParsedDocument:
 
     flush_question()
 
-    parsed_text = '\n'.join(passage_lines).strip() or '\n'.join(lines).strip()
+    raw_passage = '\n'.join(passage_lines) if passage_lines else '\n'.join(lines)
+    parsed_text = re.sub(r'\n{3,}', '\n\n', raw_passage).strip()
+    
     return ParsedDocument(parsed_text=parsed_text, questions=questions, raw_lines=lines)
 
 

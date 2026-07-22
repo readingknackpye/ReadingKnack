@@ -71,19 +71,71 @@ class UploadedDocumentSerializer(serializers.ModelSerializer):
 class QuizAnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = QuizAnswer
-        fields = ['id', 'choice_letter', 'choice_text', 'is_correct']
+        fields = ['id', 'question', 'choice_letter', 'choice_text', 'is_correct']
 
 class QuizQuestionSerializer(serializers.ModelSerializer):
     answers = QuizAnswerSerializer(many=True, read_only=True)
     
     class Meta:
         model = QuizQuestion
-        fields = ['id', 'question_text', 'explanation', 'answers', 'created_at']
+        fields = ['id', 'document', 'question_text', 'explanation', 'answers', 'created_at']
 
 class QuizResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = QuizResponse
         fields = ['id', 'document', 'user_name', 'score', 'total_questions', 'submitted_at']
+
+class StudentDashboardSerializer(serializers.ModelSerializer):
+    test_name = serializers.CharField(
+        source='document.title',
+        read_only=True
+    )
+
+    grade_level = serializers.SerializerMethodField()
+    skill = serializers.SerializerMethodField()
+    percentage = serializers.SerializerMethodField()
+    duration = serializers.SerializerMethodField()
+
+    class Meta:
+        model = QuizResponse
+        fields = [
+            'id',
+            'test_name',
+            'grade_level',
+            'skill',
+            'score',
+            'total_questions',
+            'percentage',
+            'duration',
+            'submitted_at',
+        ]
+
+    def get_grade_level(self, obj):
+        if obj.document.grade_level:
+            return obj.document.grade_level.name
+        return 'N/A'
+
+    def get_skill(self, obj):
+        if obj.document.skill_category:
+            return obj.document.skill_category.name
+        return 'N/A'
+
+    def get_percentage(self, obj):
+        if not obj.total_questions:
+            return 0
+
+        return round(
+            (obj.score / obj.total_questions) * 100,
+            1
+        )
+
+    def get_duration(self, obj):
+        if not obj.duration_seconds:
+            return "N/A"
+        mins = obj.duration_seconds // 60
+        secs = obj.duration_seconds % 60
+        return f"{mins}:{secs:02d}"
+
 
 class UserAnswerSerializer(serializers.ModelSerializer):
     class Meta:
