@@ -27,24 +27,25 @@ const Login = () => {
       
       // Get user profile after successful login
       const userResponse = await authAPI.me();
-      
+      const profile = userResponse.data?.user || {};
+
       // Store authentication data in localStorage
       localStorage.setItem('authToken', 'authenticated'); // You can store actual token if you have one
       localStorage.setItem('user', JSON.stringify({
-        username: username,
-        // Add any other user data you want to store
-        id: userResponse.data?.id,
-        email: userResponse.data?.email,
+        username: profile.username || username,
+        id: profile.id,
+        email: profile.email,
+        role: profile.role || 'student',
       }));
-      
+
       // Dispatch custom event to notify navbar about authentication change
       window.dispatchEvent(new Event('storage'));
-      
+
       // Show success message (optional)
       console.log('Login successful!');
-      
-      // Redirect to home page
-      navigate('/');
+
+      // Teachers land on their dashboard, students go home
+      navigate(profile.role === 'teacher' ? '/teacher/dashboard' : '/');
       
     } catch (err) {
       const data = err.response?.data;
