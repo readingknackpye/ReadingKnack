@@ -7,7 +7,7 @@ from rest_framework import routers
 from .views import (
     SubmitQuizView, UserRegistrationView, UserLoginView, UserLogoutView, UserProfileView,
     UploadedDocumentViewSet, QuizQuestionViewSet, QuizAnswerViewSet,
-    QuizResponseViewSet, GradeLevelViewSet, SkillCategoryViewSet, DocumentDetailView,
+    QuizResponseViewSet, GradeLevelViewSet, SkillCategoryViewSet, TopicViewSet, DocumentDetailView,
     ClassroomViewSet, StudentDashboardView
 )
 
@@ -24,6 +24,7 @@ router.register(r'answers', QuizAnswerViewSet, basename='answers')
 router.register(r'responses', QuizResponseViewSet, basename='responses')
 router.register(r'grade-levels', GradeLevelViewSet, basename='grade-levels')
 router.register(r'skill-categories', SkillCategoryViewSet, basename='skill-categories')
+router.register(r'topics', TopicViewSet, basename='topics')
 router.register(r'classrooms', ClassroomViewSet, basename='classrooms')
 
 # URL patterns
