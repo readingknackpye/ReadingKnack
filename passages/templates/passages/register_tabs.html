@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+{% block title %}Create an account{% endblock %}
+{% block content %}
+<style>
+  .register-shell {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 120px 20px 70px;
+  }
+
+  .register-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 26px;
+    align-items: stretch;
+  }
+
+  .register-intro,
+  .register-card {
+    border-radius: 30px;
+    overflow: hidden;
+    box-shadow: 0 28px 60px rgba(10, 37, 64, 0.14);
+  }
+
+  .register-intro {
+    padding: 38px;
+    background:
+      radial-gradient(circle at 85% 16%, rgba(253, 224, 71, 0.18), transparent 28%),
+      radial-gradient(circle at 18% 22%, rgba(255, 255, 255, 0.2), transparent 25%),
+      linear-gradient(135deg, #6ec8ef 0%, #4d96c7 44%, #284f77 100%);
+    color: #fff;
+  }
+
+  .register-intro h1 {
+    margin: 0 0 16px;
+    font-size: clamp(2.1rem, 4vw, 3.8rem);
+    line-height: 0.95;
+    font-family: "Fredoka", sans-serif;
+  }
+
+  .register-intro p {
+    margin: 0;
+    font-size: 1.02rem;
+    line-height: 1.75;
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  .intro-points {
+    margin-top: 26px;
+    display: grid;
+    gap: 12px;
+  }
+
+  .intro-point {
+    padding: 16px 18px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 18px;
+  }
+
+  .register-card {
+    background: rgba(255, 255, 255, 0.93);
+    border: 1px solid rgba(186, 230, 253, 0.9);
+    padding: 34px 38px;
+  }
+
+  .register-card h1 {
+    margin: 0 0 8px;
+    color: #0f172a;
+    font-size: 2rem;
+    font-family: "Fredoka", sans-serif;
+  }
+
+  .register-card > p {
+    margin: 0 0 24px;
+    color: #64748b;
+    line-height: 1.65;
+  }
+
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 16px 0 22px;
+  }
+
+  .tabs a {
+    padding: 12px 16px;
+    border-radius: 999px;
+    text-decoration: none;
+    color: #334155;
+    background: #eff6ff;
+    border: 1px solid #dbeafe;
+    font-weight: 700;
+  }
+
+  .tabs a.active {
+    color: #fff;
+    background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+    border-color: transparent;
+  }
+
+  .tabpanel {
+    padding-top: 2px;
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  .form-grid {
+    display: grid;
+    gap: 16px;
+  }
+
+  .form-errors {
+    margin-bottom: 18px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    font-size: 0.94rem;
+    line-height: 1.6;
+  }
+
+  .form-field label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .auth-input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #cbd5e1;
+    border-radius: 16px;
+    padding: 13px 16px;
+    font-size: 1rem;
+    color: #0f172a;
+    background: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .auth-input:focus {
+    outline: none;
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
+  }
+
+  .submit-btn {
+    display: block;
+    width: 100%;
+    border: 0;
+    border-radius: 16px;
+    padding: 15px 18px;
+    margin-top: 24px;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+    cursor: pointer;
+    box-shadow: 0 20px 36px rgba(37, 99, 235, 0.22);
+  }
+
+  .error-list {
+    margin-top: 6px;
+    color: #b91c1c;
+    font-size: 0.92rem;
+  }
+
+  .form-help {
+    margin-top: 6px;
+    color: #64748b;
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+
+  .form-help ul {
+    margin: 8px 0 0 18px;
+    padding: 0 0 0 14px;
+  }
+
+  .cookie-warning {
+    margin: 0 0 18px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    color: #9a3412;
+    line-height: 1.55;
+    font-weight: 700;
+  }
+
+  .register-links {
+    margin-top: 18px;
+    color: #475569;
+    line-height: 1.75;
+  }
+
+  .register-links a {
+    color: #2563eb;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  @media (max-width: 900px) {
+    .register-wrap {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<section class="register-shell">
+  <div class="register-wrap">
+    <aside class="register-intro">
+      <h1>Start your<br>learning path</h1>
+      <p>Create the right account type and move straight into lessons, practice, tests, and a clearer progress dashboard.</p>
+
+      <div class="intro-points">
+        <div class="intro-point">Students get a grade-based dashboard with recommended next steps.</div>
+        <div class="intro-point">Teachers can monitor classroom growth and unlock better interventions.</div>
+        <div class="intro-point">Parents can follow progress without guessing what their child still needs.</div>
+      </div>
+    </aside>
+
+    <section class="register-card" data-active-role="{{ active_role|default:'student' }}">
+      <h1>Create an account</h1>
+      <p>Pick the type of account you want to create and finish setup in one screen.</p>
+      <p class="cookie-warning">
+        Important: keep cookies enabled for this site. Private browsing, content blockers, or “block all cookies” settings can stop signup, login, and email verification from working.
+      </p>
+
+      <div class="tabs" role="tablist" aria-label="Registration tabs">
+        <a href="#tab-student" id="tab-student" role="tab" aria-controls="panel-student" aria-selected="{% if active_role|default:'student' == 'student' %}true{% else %}false{% endif %}" class="{% if active_role|default:'student' == 'student' %}active{% endif %}">Student</a>
+        <a href="#tab-parent"  id="tab-parent"  role="tab" aria-controls="panel-parent"  aria-selected="{% if active_role == 'parent' %}true{% else %}false{% endif %}" class="{% if active_role == 'parent' %}active{% endif %}">Parent / Guardian</a>
+        <a href="#tab-teacher" id="tab-teacher" role="tab" aria-controls="panel-teacher" aria-selected="{% if active_role == 'teacher' %}true{% else %}false{% endif %}" class="{% if active_role == 'teacher' %}active{% endif %}">Teacher</a>
+      </div>
+
+      {% url 'core:register_student' as rs_ns %}
+      {% url 'register_student' as rs_plain %}
+<div class="tabpanel{% if active_role != 'student' and active_role %} hidden{% endif %}" id="panel-student" role="tabpanel" aria-labelledby="tab-student">        <form method="post" action="{{ rs_ns|default:rs_plain|default:'/register/student/' }}">
+          {% csrf_token %}
+          {% if student_form.non_field_errors %}
+            <div class="form-errors">{{ student_form.non_field_errors }}</div>
+          {% endif %}
+          <div class="form-grid">
+            {% for field in student_form %}
+              <div class="form-field">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                  <div class="error-list">{{ field.errors }}</div>
+                {% endif %}
+                {% if field.help_text %}
+                  <div class="form-help">{{ field.help_text|safe }}</div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+          <button type="submit" class="submit-btn">Create Student Account</button>
+        </form>
+      </div>
+
+      {% url 'core:register_parent' as rp_ns %}
+      {% url 'register_parent' as rp_plain %}
+      <div class="tabpanel{% if active_role != 'parent' %} hidden{% endif %}" id="panel-parent" role="tabpanel" aria-labelledby="tab-parent">
+        <form method="post" action="{{ rp_ns|default:rp_plain|default:'/register/parent/' }}">
+          {% csrf_token %}
+          {% if parent_form.non_field_errors %}
+            <div class="form-errors">{{ parent_form.non_field_errors }}</div>
+          {% endif %}
+          <div class="form-grid">
+            {% for field in parent_form %}
+              <div class="form-field">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                  <div class="error-list">{{ field.errors }}</div>
+                {% endif %}
+                {% if field.help_text %}
+                  <div class="form-help">{{ field.help_text|safe }}</div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+          <button type="submit" class="submit-btn">Create Parent Account</button>
+        </form>
+      </div>
+
+      {% url 'core:register_teacher' as rt_ns %}
+      {% url 'register_teacher' as rt_plain %}
+      <div class="tabpanel{% if active_role != 'teacher' %} hidden{% endif %}" id="panel-teacher" role="tabpanel" aria-labelledby="tab-teacher">
+        <form method="post" action="{{ rt_ns|default:rt_plain|default:'/register/teacher/' }}">
+          {% csrf_token %}
+          {% if teacher_form.non_field_errors %}
+            <div class="form-errors">{{ teacher_form.non_field_errors }}</div>
+          {% endif %}
+          <div class="form-grid">
+            {% for field in teacher_form %}
+              <div class="form-field">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                  <div class="error-list">{{ field.errors }}</div>
+                {% endif %}
+                {% if field.help_text %}
+                  <div class="form-help">{{ field.help_text|safe }}</div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+          <button type="submit" class="submit-btn">Create Teacher Account</button>
+        </form>
+      </div>
+      <p class="register-links">
+        Teacher account? <a href="{% url 'core:register_teacher' %}">Create a teacher account here</a>.
+      </p>
+      <p class="register-links">
+        Already have an account? <a href="{% url 'core:login' %}">Log in</a>.
+      </p>
+    </section>
+  </div>
+</section>
+
+<script>
+(function(){
+  const tabs = document.querySelectorAll('.tabs a');
+  const card = document.querySelector('.register-card');
+  const panels = {
+    '#tab-student': document.getElementById('panel-student'),
+    '#tab-parent':  document.getElementById('panel-parent'),
+    '#tab-teacher': document.getElementById('panel-teacher')
+  };
+  function activate(id){
+    tabs.forEach(a=>{
+      const active = ('#'+a.id) === id;
+      a.classList.toggle('active', active);
+      a.setAttribute('aria-selected', active ? 'true' : 'false');
+      panels['#'+a.id].classList.toggle('hidden', !active);
+    });
+  }
+  tabs.forEach(a=>{
+    a.addEventListener('click', (e)=>{ e.preventDefault(); activate('#'+a.id); history.replaceState(null,'', a.getAttribute('href')); });
+  });
+  const defaultTab = '#tab-' + ((card && card.dataset.activeRole) || 'student');
+  if (location.hash && panels[location.hash]) activate(location.hash);
+  else if (panels[defaultTab]) activate(defaultTab);
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Check Your Email{% endblock %}
+{% block content %}
+<section style="max-width:760px;margin:0 auto;padding:120px 20px 70px;">
+  <div style="background:rgba(255,255,255,0.95);border:1px solid rgba(186,230,253,0.95);border-radius:28px;padding:30px;box-shadow:0 24px 50px rgba(10,37,64,0.12);">
+    <h1 style="margin:0 0 10px;font-family:'Fredoka',sans-serif;color:#0f172a;">Check Your Email</h1>
+    <p style="color:#64748b;line-height:1.7;">
+      We created your account{% if submitted_email %} for <strong>{{ submitted_email }}</strong>{% endif %}.
+      Open the verification link in the email to finish setup.
+    </p>
+    <p style="padding:12px 14px;border-radius:16px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;line-height:1.55;font-weight:700;">
+      Important: keep cookies enabled for this site. Private browsing, content blockers, or “block all cookies” settings can stop verification and login from working.
+    </p>
+    {% if teacher_pending %}
+      <p style="color:#64748b;line-height:1.7;">
+        Your teacher account was created and is now waiting for site admin approval.
+        {% if teacher_approval_recipients %}
+          {% if not approval_email_failed %}
+            A notice was queued for <strong>{{ teacher_approval_recipients|join:", " }}</strong>.
+          {% else %}
+            The approval notice was supposed to go to <strong>{{ teacher_approval_recipients|join:", " }}</strong>.
+          {% endif %}
+        {% endif %}
+      </p>
+    {% endif %}
+    {% if verification_email_failed %}
+      <p style="color:#b91c1c;line-height:1.7;">
+        The verification email could not be sent with the current mail settings.
+        Your account is still waiting for verification and will not be activated until delivery succeeds.
+      </p>
+    {% endif %}
+    {% if approval_email_failed %}
+      <p style="color:#b91c1c;line-height:1.7;">
+        The teacher approval email could not be sent to the site admin yet.
+        Your request is still saved and can be reviewed manually from the admin panel.
+      </p>
+    {% endif %}
+    {% if local_bypass_enabled and verification_email_failed %}
+      <p style="color:#9a3412;line-height:1.7;">
+        Local bypass is enabled for this environment, so developers may still activate accounts without inbox delivery.
+      </p>
+    {% endif %}
+    {% if show_local_email_hint %}
+      <p style="color:#64748b;line-height:1.7;">
+        Local email files are saved in <code>{{ local_email_path }}</code>.
+      </p>
+    {% endif %}
+    <a href="{% url 'core:login' %}" style="display:inline-flex;margin-top:10px;padding:12px 16px;border-radius:14px;background:linear-gradient(135deg,#0ea5e9 0%,#2563eb 100%);color:#fff;text-decoration:none;font-weight:800;">Return to Login</a>
+  </div>
+</section>
+{% endblock %}

@@ -261,20 +261,29 @@ def parse_pye(paragraphs: list[str]) -> ParsedDoc:
     text = _document_text(paragraphs)
     lines = [p.rstrip() for p in paragraphs]
 
+    # if there is no questions to answer header, treat the entire thing as a plain passage
     q_match = QUESTIONS_HEADER_TEXT.search(text)
     if q_match is None:
-        raise PYEParseError(_format_error(
-            "Could not find a 'Questions to Answer' header.",
-            context=_preview_readable_paragraphs(lines),
-            hint="Add 'Questions to Answer' as its own paragraph after the passage and before the numbered questions.",
-        ))
+        non_empty_lines = [_clean(ln) for ln in text.splitlines() if ln.strip()]
+        if not non_empty_lines:
+            raise PYEParseError("No readable text was found in the uploaded file.")
+
+        title = _clean(non_empty_lines[0])
+        passage = _clean("".join(non_empty_lines[1:]))
+        return ParsedDoc(title=title, passage=passage, questions=[])
 
     a_match = ANSWER_KEY_HEADER_TEXT.search(text, q_match.end())
+    # if there is no answer key, parse the questions we do have and skip the answers
     if a_match is None:
-        raise PYEParseError(_format_error(
-            "Could not find an 'Answer Key' header.",
-            hint="Add 'Answer Key' as its own paragraph after the last question and before the correct answers.",
-        ))
+        head_text = text[:q_match.start()]
+        non_empty_head = [_clean(ln) for ln in head_text.splitlines() if ln.strip()]
+        
+        title = _clean(non_empty_head[0]) if non_empty_head else "Untitled Passage"
+        passage = _clean(" ".join(non_empty_head[1:])) if len(non_empty_head) > 1 else ""
+        
+        questions = _parse_questions_block(text[q_match.end():])
+        return ParsedDoc(title=title, passage=passage, questions=questions)
+    
     if not q_match.start() < a_match.start():
         raise PYEParseError(_format_error(
             "The section headers are out of order.",

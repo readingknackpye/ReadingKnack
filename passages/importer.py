@@ -8,7 +8,8 @@ def import_parsed_doc(document: UploadedDocument, parsed) -> None:
 
     # make sure title is saved if it exists
     if hasattr(parsed, 'title') and parsed.title:
-        document.title = parsed.title
+        if not document.title or document.title.strip() == '':
+            document.title = parsed.title
         
     document.save(update_fields=["parsed_text", "title"])
 

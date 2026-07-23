@@ -1,8 +1,24 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
-const Home = () => (
-  <div
-    style={{
+const Home = () => {
+  const [auth, setAuth] = useState({ isAuth: false, role: '' });
+
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    const token = localStorage.getItem('authToken');
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setAuth({ isAuth: true, role: user.role || '' });
+      } catch (e) {
+        setAuth({ isAuth: false, role: '' });
+      }
+    }
+  }, []);
+
+  return (
+    <div style={{       
       position: 'fixed',
       top: 0,
       left: 0,
@@ -14,11 +30,10 @@ const Home = () => (
       alignItems: 'center',
       background:
         'linear-gradient(135deg, #ffffff 30%, #f3f0ff 60%, #dbe6ff 100%)',
-      padding: '2rem',
+      padding: '2rem'
     }}
-  >
-    <div
-      style={{
+      >
+      <div style={{
         maxWidth: '600px',
         width: '100%',
         textAlign: 'center',
@@ -26,62 +41,56 @@ const Home = () => (
         // Soft translucent white to blend with the gradient
         backgroundColor: 'rgba(255, 255, 255, 0.85)',
         borderRadius: '8px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
       }}
-    >
-      {/* your content here, unchanged */}
-      <img
-        src="/logo.png"
-        alt="ReadingKnack Logo"
-        style={{ width: 180, marginBottom: 24 }}
-      />
-
-      <h1
-        style={{
-          fontSize: '2.5rem',
-          fontWeight: 900,
-          color: 'var(--rk-dark)',
-          marginBottom: 8,
-        }}
-      >
-        <span
-          style={{
-            background:
-              'linear-gradient(90deg, var(--rk-pink), var(--rk-purple), var(--rk-blue))',
+        >
+        <img src="/logo.png" alt="ReadingKnack Logo" style={{ width: 180, marginBottom: 24 }} />
+        <h1>
+          <span style={{
+            background: 'linear-gradient(90deg, var(--rk-pink), var(--rk-purple), var(--rk-blue))',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
-            display: 'inline-block',
-          }}
-        >
-          ReadingKnack
-        </span>
-        <span style={{ color: 'var(--rk-dark)' }}>.com</span>
-      </h1>
+            backgroundClip: 'text',
+            color: 'transparent',
+            display: 'inline-block'
+          }}>
+            ReadingKnack
+          </span>.com
+        </h1>
+        <p>A Personalized Learning Platform for Reading Comprehension Mastery</p>
 
-      <p
-        style={{
-          color: 'var(--rk-dark)',
-          fontWeight: 500,
-          fontSize: '1.1rem',
-          marginBottom: 32,
-        }}
-      >
-        A Personalized Learning Platform for Reading Comprehension Mastery (Grades
-        3–8 + SAT)
-      </p>
-
-      <a href="/upload" className="btn" style={{ marginRight: 16 }}>
-        Upload Document
-      </a>
-      <a
-        href="/documents"
-        className="btn"
-        style={{ background: 'var(--rk-blue)', color: '#fff' }}
-      >
-        Browse Passages
-      </a>
+        {/* Dynamic Action Buttons based on Role */}
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+          {!auth.isAuth ? (
+            <>
+              <Link to="/login" className="btn">Log In</Link>
+              <Link to="/signup" className="btn" style={{ background: 'var(--rk-blue)', color: '#fff' }}>Get Started</Link>
+            </>
+          ) : auth.role === 'teacher' ? (
+            <>
+              <Link to="/upload" className="btn">Upload File</Link>
+              <Link to="/documents" className="btn">Library</Link>
+            </>
+          ) : auth.role === 'parent' ? (
+            <>
+              <Link to="/parent-dashboard" className="btn">Parent Dashboard</Link>
+              <Link to="/documents" className="btn">Library</Link>
+            </>
+          ) : (
+            /* Student View */
+            <>
+              <Link to="/student-dashboard" className="btn">
+                Go to Dashboard
+              </Link>
+              <Link to="/documents" className="btn">
+                Browse Library
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default Home;

@@ -15,28 +15,56 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'date_joined', 'role')
 
     def get_role(self, obj):
+        if obj.is_staff or obj.is_superuser:
+            return Profile.ROLE_TEACHER
         profile = getattr(obj, 'profile', None)
         return profile.role if profile else Profile.ROLE_STUDENT
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
-    password2 = serializers.CharField(write_only=True, required=True)
-    role = serializers.ChoiceField(choices=Profile.ROLE_CHOICES, write_only=True, required=False, default=Profile.ROLE_STUDENT)
+    password = serializers.CharField(write_only=True)
+    password2 = serializers.CharField(write_only=True, required=False)
+    
+    # Accept the new dynamic fields from React
+    role = serializers.CharField(write_only=True, required=False)
+    grade = serializers.IntegerField(write_only=True, required=False, allow_null=True)
+    class_size = serializers.IntegerField(write_only=True, required=False, allow_null=True)
+    relationship = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = User
-        fields = ('username', 'password', 'password2', 'email', 'first_name', 'last_name', 'role')
-
-    def validate(self, attrs):
-        if attrs['password'] != attrs['password2']:
-            raise serializers.ValidationError({"password": "Password fields didn't match."})
-        return attrs
+        fields = ('username', 'email', 'password', 'password2', 'first_name', 'last_name', 'role', 'grade', 'class_size', 'relationship')
 
     def create(self, validated_data):
-        validated_data.pop('password2')
-        role = validated_data.pop('role', Profile.ROLE_STUDENT)
-        user = User.objects.create_user(**validated_data)
-        Profile.objects.create(user=user, role=role)
+        # Extract the custom profile data before creating the base Django User
+        role = validated_data.pop('role', 'student')
+        grade = validated_data.pop('grade', None)
+        class_size = validated_data.pop('class_size', None)
+        relationship = validated_data.pop('relationship', '')
+        
+        validated_data.pop('password2', None)
+
+        # Create the base Django User
+        user = User.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data['email'],
+            password=validated_data['password'],
+            first_name=validated_data.get('first_name', ''),
+            last_name=validated_data.get('last_name', '')
+        )
+        
+        # Update or Create their connected Profile
+        profile, created = Profile.objects.get_or_create(user=user)
+        profile.role = role
+        profile.grade = grade if grade else None
+        profile.class_size = class_size if class_size else None
+        profile.relationship = relationship
+        
+        # Apply the new strict security rules
+        profile.email_verified = False
+        profile.teacher_approved = False
+        
+        profile.save()
+        
         return user
 
 class ClassroomSerializer(serializers.ModelSerializer):

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Teacher Approval{% endblock %}
+{% block content %}
+<section style="max-width:760px;margin:0 auto;padding:120px 20px 70px;">
+  <div style="background:rgba(255,255,255,0.95);border:1px solid rgba(186,230,253,0.95);border-radius:28px;padding:30px;box-shadow:0 24px 50px rgba(10,37,64,0.12);">
+    {% if approval_success %}
+      <h1 style="margin:0 0 10px;font-family:'Fredoka',sans-serif;color:#0f172a;">Teacher Approved</h1>
+      <p style="color:#64748b;line-height:1.7;">
+        <strong>{{ approved_user.username }}</strong> has been approved.
+        The account can now log in.
+      </p>
+    {% elif approval_already_resolved %}
+      <h1 style="margin:0 0 10px;font-family:'Fredoka',sans-serif;color:#0f172a;">Teacher Request Already Reviewed</h1>
+      <p style="color:#64748b;line-height:1.7;">
+        This teacher request was already marked as <strong>{{ approval_request.get_status_display }}</strong>.
+        No additional action was taken.
+      </p>
+    {% else %}
+      <h1 style="margin:0 0 10px;font-family:'Fredoka',sans-serif;color:#0f172a;">Approval Link Invalid</h1>
+      <p style="color:#64748b;line-height:1.7;">
+        This teacher approval link is invalid, expired, or the account could not be found.
+      </p>
+    {% endif %}
+    <a href="/login/" style="display:inline-flex;margin-top:10px;padding:12px 16px;border-radius:14px;background:linear-gradient(135deg,#0ea5e9 0%,#2563eb 100%);color:#fff;text-decoration:none;font-weight:800;">Return to Login</a>
+  </div>
+</section>
+{% endblock %}

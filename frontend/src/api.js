@@ -1,8 +1,10 @@
 import axios from 'axios';
 
-const API_BASE_URL =
-  process.env.REACT_APP_API_BASE_URL ||
-  `${window.location.protocol}//${window.location.hostname}:8000/api`;
+const API_BASE_URL = process.env.REACT_APP_API_URL || (
+  window.location.hostname === 'localhost' 
+    ? 'http://localhost:8000/api' 
+    : '/api'
+);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -20,6 +22,8 @@ export const authAPI = {
   login: (payload) => api.post("/auth/login/", payload),
   logout: () => api.post("/auth/logout/"),
   me: () => api.get("/auth/profile/"),
+  linkChild: (payload) => api.post("/auth/link-child/", payload),
+  getParentDashboard: () => api.get("/parent-dashboard/"),
 };
 
 // Documents API

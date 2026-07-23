@@ -208,7 +208,7 @@ const Quiz = () => {
       if (passageNode && passageNode.contains(range.commonAncestorContainer)) {
         try {
           const span = window.document.createElement('mark'); 
-          // add a nice blue background with rounded corners
+          // add a nice pastel background with rounded corners
           span.style.backgroundColor = '#d0e86f'; 
           span.style.color = 'inherit';
           span.style.borderRadius = '2px';

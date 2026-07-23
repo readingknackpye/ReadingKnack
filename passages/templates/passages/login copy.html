@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+{% block title %}Log In{% endblock %}
+{% block content %}
+<style>
+  .auth-shell {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 120px 20px 70px;
+  }
+
+  .auth-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 26px;
+    align-items: stretch;
+  }
+
+  .auth-panel,
+  .auth-form-card {
+    border-radius: 30px;
+    overflow: hidden;
+    box-shadow: 0 28px 60px rgba(10, 37, 64, 0.14);
+  }
+
+  .auth-panel {
+    position: relative;
+    padding: 40px;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.22), transparent 28%),
+      radial-gradient(circle at 85% 18%, rgba(253, 224, 71, 0.2), transparent 25%),
+      linear-gradient(135deg, #67c4ef 0%, #5a9bc5 48%, #315d87 100%);
+    color: #fff;
+  }
+
+  .auth-panel h1 {
+    font-size: clamp(2.2rem, 4vw, 4rem);
+    line-height: 0.95;
+    margin: 0 0 16px;
+    font-family: "Fredoka", sans-serif;
+  }
+
+  .auth-panel p {
+    margin: 0;
+    max-width: 540px;
+    font-size: 1.05rem;
+    line-height: 1.75;
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  .auth-feature-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 28px;
+  }
+
+  .auth-feature {
+    padding: 18px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(10px);
+  }
+
+  .auth-feature strong {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 1rem;
+  }
+
+  .auth-form-card {
+    background: rgba(255, 255, 255, 0.93);
+    border: 1px solid rgba(186, 230, 253, 0.9);
+    padding: 34px 38px;
+  }
+
+  .auth-form-card h2 {
+    margin: 0 0 8px;
+    color: #0f172a;
+    font-size: 2rem;
+    font-family: "Fredoka", sans-serif;
+  }
+
+  .auth-form-card p {
+    margin: 0 0 24px;
+    color: #64748b;
+    line-height: 1.65;
+  }
+
+  .form-stack {
+    display: grid;
+    gap: 16px;
+  }
+
+  .auth-form {
+    display: grid;
+    gap: 18px;
+  }
+
+  .form-field label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .auth-input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #cbd5e1;
+    border-radius: 16px;
+    padding: 13px 16px;
+    font-size: 1rem;
+    color: #0f172a;
+    background: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .auth-input:focus {
+    outline: none;
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
+  }
+
+  .field-errors,
+  .form-errors {
+    margin-top: 6px;
+    color: #b91c1c;
+    font-size: 0.92rem;
+  }
+
+  .auth-submit {
+    display: block;
+    width: 100%;
+    border: 0;
+    border-radius: 16px;
+    padding: 15px 18px;
+    margin-top: 24px;
+    background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 20px 36px rgba(37, 99, 235, 0.22);
+  }
+
+  .auth-submit-wrap {
+    padding-top: 22px;
+  }
+
+  .auth-links {
+    margin-top: 18px;
+    color: #475569;
+    line-height: 1.75;
+  }
+
+  .auth-links a {
+    color: #2563eb;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  @media (max-width: 900px) {
+    .auth-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .auth-feature-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<section class="auth-shell">
+  <div class="auth-layout">
+    <aside class="auth-panel">
+      <h1>Welcome<br>back</h1>
+      <p>Jump back into your lessons, continue practice, and see the next best test or skill set waiting for you.</p>
+
+      <div class="auth-feature-grid">
+        <div class="auth-feature">
+          <strong>Track Progress</strong>
+          Pick up exactly where you left off.
+        </div>
+        <div class="auth-feature">
+          <strong>Smart Next Steps</strong>
+          See recommended practice and tests by grade.
+        </div>
+        <div class="auth-feature">
+          <strong>Cleaner Dashboard</strong>
+          Your progress, streaks, and activity in one place.
+        </div>
+        <div class="auth-feature">
+          <strong>Built For Students</strong>
+          Fast access to lessons, practice, and tests.
+        </div>
+      </div>
+    </aside>
+
+    <section class="auth-form-card">
+      <h2>Log In</h2>
+      <p>Use your username and password to open your learning dashboard.</p>
+      {% if request.GET.teacher_pending %}
+        <div class="form-errors" style="background:#ecfeff; color:#155e75; border:1px solid #a5f3fc; padding:12px 14px; border-radius:14px; margin-bottom:18px;">
+          Your teacher account is pending supervisor approval.
+          An admin must approve your request before you can log in.
+        </div>
+      {% endif %}
+      {% if request.GET.approval_email_failed %}
+        <div class="form-errors" style="background:#fff7ed; color:#9a3412; border:1px solid #fdba74; padding:12px 14px; border-radius:14px; margin-bottom:18px;">
+          Your teacher request is still saved, but the approval email was not delivered yet.
+          The admin can still review it from the site backend.
+        </div>
+      {% endif %}
+      {% if request.GET.email_verified %}
+        <div class="form-errors" style="background:#ecfdf5; color:#166534; border:1px solid #86efac; padding:12px 14px; border-radius:14px; margin-bottom:18px;">
+          Your email has been verified. You can log in now.
+        </div>
+      {% endif %}
+
+      <form method="post" novalidate class="auth-form">
+        {% csrf_token %}
+        {% if next %}
+          <input type="hidden" name="next" value="{{ next }}">
+        {% endif %}
+        {% if form.non_field_errors %}
+          <div class="form-errors">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="form-stack">
+          <div class="form-field">
+            <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+            {{ form.username }}
+            {% if form.username.errors %}
+              <div class="field-errors">{{ form.username.errors }}</div>
+            {% endif %}
+          </div>
+
+          <div class="form-field">
+            <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+            {{ form.password }}
+            {% if form.password.errors %}
+              <div class="field-errors">{{ form.password.errors }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="auth-submit-wrap">
+          <button type="submit" class="auth-submit">Open My Dashboard</button>
+        </div>
+      </form>
+
+      <div class="auth-links">
+        <a href="{% url 'core:password_reset' %}">Forgot your password?</a><br>
+        <a href="{% url 'core:forgot_username' %}">Forgot your username?</a><br>
+        New here? <a href="{% url 'core:register' %}">Create an account</a><br>
+        Want to learn first? <a href="{% url 'core:home' %}">Return to home</a>
+      </div>
+    </section>
+  </div>
+</section>
+{% endblock %}

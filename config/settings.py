@@ -26,9 +26,23 @@ load_dotenv(BASE_DIR / ".env")
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-not-secure")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "True") == "True"
+DEBUG = str(os.getenv("DEBUG", "True")).strip().lower() == "true"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,readingknack.com").split(",")
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    X_FRAME_OPTIONS = 'DENY'
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+else:
+    # Local development settings
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
 
 
 # Application definition
@@ -153,10 +167,10 @@ MEDIA_ROOT = BASE_DIR / 'media'
 USE_S3 = os.getenv('USE_S3', 'False') == 'True'
 
 # Debug logging for S3 configuration
-print(f"DEBUG: USE_S3 = {USE_S3}")
-print(f"DEBUG: AWS_ACCESS_KEY_ID = {os.getenv('AWS_ACCESS_KEY_ID', 'NOT_SET')[:20]}...")
-print(f"DEBUG: AWS_STORAGE_BUCKET_NAME = {os.getenv('AWS_STORAGE_BUCKET_NAME', 'NOT_SET')}")
-print(f"DEBUG: AWS_S3_ENDPOINT_URL = {os.getenv('AWS_S3_ENDPOINT_URL', 'NOT_SET')}")
+# print(f"DEBUG: USE_S3 = {USE_S3}")
+# print(f"DEBUG: AWS_ACCESS_KEY_ID = {os.getenv('AWS_ACCESS_KEY_ID', 'NOT_SET')[:20]}...")
+# print(f"DEBUG: AWS_STORAGE_BUCKET_NAME = {os.getenv('AWS_STORAGE_BUCKET_NAME', 'NOT_SET')}")
+# print(f"DEBUG: AWS_S3_ENDPOINT_URL = {os.getenv('AWS_S3_ENDPOINT_URL', 'NOT_SET')}")
 
 if USE_S3:
     # S3-compatible storage backend
@@ -186,11 +200,7 @@ if USE_S3:
     # Media files in S3
     MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/'
     MEDIA_ROOT = ''
-    
-    print(f"DEBUG: S3 storage configured with bucket: {AWS_STORAGE_BUCKET_NAME}")
-    print(f"DEBUG: MEDIA_URL set to: {MEDIA_URL}")
 else:
-    print("DEBUG: Using local storage...")
     # Local storage (default)
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
@@ -210,52 +220,46 @@ REST_FRAMEWORK = {
 # Using CsrfExemptSessionAuthentication disables CSRF checks for API endpoints, which is standard for REST APIs consumed by JS frontends.
 
 # CORS Configuration
-CORS_ALLOW_ALL_ORIGINS = True  # Set to False for production
+# CORS_ALLOW_ALL_ORIGINS = True  # Set to False for production
 # For production, use:
 # CORS_ALLOWED_ORIGINS = [
 #     "https://your-frontend.com",
 # ]
 
+# ==========================================
+# CORS & CSRF CONFIGURATION
+# ==========================================
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOW_METHODS = [
-    'DELETE',
-    'GET',
-    'OPTIONS',
-    'PATCH',
-    'POST',
-    'PUT',
-]
+if DEBUG:
+    # Local Development
+    CORS_ALLOW_ALL_ORIGINS = True
+    CSRF_TRUSTED_ORIGINS = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ]
+else:
+    # Strict Production
+    CORS_ALLOW_ALL_ORIGINS = False
+    CORS_ALLOWED_ORIGINS = [
+        "https://readingknack.com",
+        "https://www.readingknack.com",
+    ]
+    CSRF_TRUSTED_ORIGINS = [
+        "https://readingknack.com",
+        "https://www.readingknack.com",
+    ]
 
-CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-]
-
-# Add this for CSRF trusted origins
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-    # Add your production URLs here:
-    # "https://your-frontend.com",
-]
+CORS_ALLOW_METHODS = ['DELETE', 'GET', 'OPTIONS', 'PATCH', 'POST', 'PUT']
+CORS_ALLOW_HEADERS = ['accept', 'accept-encoding', 'authorization', 'content-type', 'dnt', 'origin', 'user-agent', 'x-csrftoken', 'x-requested-with']
 
 # CSRF Configuration
-CSRF_COOKIE_SECURE = not DEBUG  # Only require HTTPS for CSRF cookies in production, allowing HTTP during local development
 CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript access for AJAX requests
-CSRF_USE_SESSIONS = True  # Store CSRF token in session instead of cookie
+CSRF_USE_SESSIONS = False      # Store CSRF token in session instead of cookie
 
 # Session Configuration
-SESSION_COOKIE_SECURE = not DEBUG  # Only require HTTPS for session cookies in production, allowing HTTP during local development
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_AGE = 1209600  # 2 weeks in seconds
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
@@ -264,3 +268,5 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

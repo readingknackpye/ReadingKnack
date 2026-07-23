@@ -26,6 +26,15 @@ from .serializers import (
     SkillCategorySerializer, UserRegistrationSerializer, UserSerializer,StudentDashboardSerializer,
     ClassroomSerializer
 )
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
+from django.conf import settings
+from django.urls import reverse
+from django.shortcuts import redirect
+from django.contrib.auth.models import User
 from django.http import JsonResponse
 import json
 from .authentication import CsrfExemptSessionAuthentication
@@ -37,6 +46,7 @@ from passages import serializers
 from django.db import transaction
 from .importer import import_document
 from .pye_parser import PYEParseError
+from .models import ParentLink
 
 def upload_document(request):
     parsed_content = None
@@ -74,6 +84,69 @@ def upload_document(request):
         form = UploadedDocumentForm()
 
     return render(request, 'passages/upload_form.html', {'form': form})
+
+# --- EMAIL HELPER FUNCTIONS ---
+def send_verification_email(request, user):
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    token = default_token_generator.make_token(user)
+    
+    # Generate the verification URL targeting our new API endpoint
+    verification_path = reverse('verify_email_confirm', args=[uid, token])
+    verification_url = request.build_absolute_uri(verification_path)
+
+    context = {
+        'user': user,
+        'verification_url': verification_url
+    }
+
+    # Uses the templates you already moved to the passages folder
+    subject = "Verify your ReadingKnack account"
+    text_body = render_to_string("passages/email_verification_email.txt", context)
+    html_body = render_to_string("passages/email_verification_email.html", context)
+
+    send_mail(
+        subject=subject,
+        message=text_body,
+        from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@readingknack.com'),
+        recipient_list=[user.email],
+        html_message=html_body,
+        fail_silently=True,
+    )
+
+def send_admin_teacher_approval_email(request, user):
+    subject = "Teacher account approval needed"
+    message = f"A new teacher account ({user.username} - {user.email}) is waiting for approval.\n\nPlease log in to the Django admin panel to approve them by checking 'Teacher Approved' in their Profile."
+
+    send_mail(
+        subject=subject,
+        message=message,
+        from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@readingknack.com'),
+        recipient_list=[getattr(settings, 'TEACHER_APPROVAL_EMAIL', 'admin@readingknack.com')],
+        fail_silently=True,
+    )
+
+# --- VERIFICATION ENDPOINT ---
+class VerifyEmailConfirmView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request, uidb64, token):
+        try:
+            user_id = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=user_id)
+            
+            if default_token_generator.check_token(user, token):
+                profile = user.profile
+                profile.email_verified = True
+                profile.save()
+                
+                # Redirect back to the React login page with a success flag
+                # Note: Change localhost:3000 to your real domain in production
+                return redirect('http://localhost:3000/login?email_verified=1')
+            else:
+                return redirect('http://localhost:3000/login?error=invalid_token')
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return redirect('http://localhost:3000/login?error=invalid_token')
 
 
 def clean_file(self):
@@ -123,11 +196,13 @@ class UploadedDocumentViewSet(viewsets.ModelViewSet):
                 {"detail": "You must be logged in to upload documents."},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
-
+        is_admin = request.user.is_staff or request.user.is_superuser
         profile = getattr(request.user, 'profile', None)
-        if not (profile and profile.role == 'teacher'):
+        is_teacher = profile and profile.role == 'teacher'
+
+        if not (is_admin or is_teacher):
             return Response(
-                {"detail": "Only teacher accounts can upload documents."},
+                {"detail": "Only teacher accounts and admins can upload documents."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -344,18 +419,22 @@ class UserRegistrationView(APIView):
             if request.content_type == 'application/json':
                 data = request.data
             else:
-                # Handle form data - Django UserCreationForm uses password1 and password2
                 data = {
                     'username': request.POST.get('username'),
-                    'password': request.POST.get('password1'),  # Django sends password1
+                    'password': request.POST.get('password'),
                     'password2': request.POST.get('password2'),
                     'email': request.POST.get('email'),
                     'first_name': request.POST.get('first_name'),
                     'last_name': request.POST.get('last_name'),
+                    # Catch the new fields from React
+                    'role': request.POST.get('role', 'student'),
+                    'grade': request.POST.get('grade'),
+                    'class_size': request.POST.get('class_size'),
+                    'relationship': request.POST.get('relationship'),
                 }
             
             # Validate required fields
-            required_fields = ['username', 'password', 'password2', 'email', 'first_name', 'last_name']
+            required_fields = ['username', 'password', 'password2', 'email', 'first_name', 'last_name', 'role']
             missing_fields = [field for field in required_fields if not data.get(field)]
             
             if missing_fields:
@@ -364,15 +443,11 @@ class UserRegistrationView(APIView):
                     'error': f'Missing required fields: {", ".join(missing_fields)}'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
-            # Debug: Log the data being sent to serializer
-            print(f"Registration data: {data}")
-            
             serializer = UserRegistrationSerializer(data=data)
             if serializer.is_valid():
                 user = serializer.save()
-                
-                # Log the user in after successful registration
-                login(request, user)
+
+                send_verification_email(request, user)
                 
                 return Response({
                     'success': True,
@@ -380,7 +455,6 @@ class UserRegistrationView(APIView):
                     'user': UserSerializer(user).data
                 }, status=status.HTTP_201_CREATED)
             else:
-                print(f"Serializer errors: {serializer.errors}")
                 return Response({
                     'success': False,
                     'errors': serializer.errors
@@ -470,3 +544,62 @@ class UserProfileView(APIView):
                 'success': False,
                 'error': 'User not authenticated'
             }, status=status.HTTP_401_UNAUTHORIZED)
+
+class LinkChildAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if request.user.profile.role != 'parent':
+            return Response({'error': 'Only parents can link to students.'}, status=status.HTTP_403_FORBIDDEN)
+
+        student_username = request.data.get('student_username', '').strip()
+        relationship = request.data.get('relationship', '').strip()
+
+        # Find the student
+        student = User.objects.filter(username=student_username, profile__role='student').first()
+        
+        if not student:
+            return Response({'error': 'No student found with that username.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Create the link
+        ParentLink.objects.get_or_create(
+            parent=request.user,
+            student=student,
+            defaults={'relationship': relationship[:50]}
+        )
+
+        return Response({'success': True, 'message': f'Successfully linked to student: {student.username}'})
+
+class ParentDashboardAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.profile.role != 'parent':
+            return Response({'error': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+
+        # Find all students linked to this parent
+        links = ParentLink.objects.filter(parent=request.user).select_related('student')
+        
+        children_data = []
+        for link in links:
+            student = link.student
+            # Get the child's latest 5 quiz responses
+            recent_quizzes = QuizResponse.objects.filter(user=student).order_by('-submitted_at')[:5]
+            
+            quiz_data = [{
+                'test_name': q.document.title,
+                'score': q.score,
+                'total': q.total_questions,
+                'percentage': round((q.score / q.total_questions) * 100) if q.total_questions else 0,
+                'date': q.submitted_at.strftime('%b %d, %Y')
+            } for q in recent_quizzes]
+
+            children_data.append({
+                'id': student.id,
+                'username': student.username,
+                'first_name': student.first_name,
+                'relationship': link.relationship,
+                'recent_activity': quiz_data
+            })
+
+        return Response({'children': children_data})

@@ -1,0 +1,12 @@
+Hi {{ user.username }},
+
+Thanks for creating your ReadingKnack account.
+
+Verify your email by opening this link:
+{{ verification_url }}
+
+{% if user.role == "teacher" %}
+Teacher accounts also need admin approval before they can log in.
+{% endif %}
+
+If you did not create this account, you can ignore this email.

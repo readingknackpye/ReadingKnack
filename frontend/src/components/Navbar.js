@@ -95,7 +95,7 @@ const Navbar = () => {
       width: '100%',
       boxSizing: 'border-box',
     }}>
-      <div style={{ 
+    <div style={{ 
         display: 'flex', 
         alignItems: 'center', 
         gap: '2rem',
@@ -120,27 +120,43 @@ const Navbar = () => {
           </span>
           <span style={{ color: 'var(--rk-dark)', fontWeight: 700, fontSize: '1.5rem', marginLeft: 2 }}>.com</span>
         </Link>
-        <Link to="/upload" className="btn" style={{ marginRight: 8 }}>
-          Upload
-        </Link>
 
-        <Link to="/documents" className="btn" style={{ marginRight: 8 }}>
-          Documents
-        </Link>
+        {/* Only show links if authenticated */}
+        {isAuthenticated && (
+          <>
+            {/* Only Teachers see Upload */}
+            {role === 'teacher' && (
+              <Link to="/upload" className="btn" style={{ marginRight: 8 }}>
+                Upload
+              </Link>
+            )}
 
-        {isAuthenticated && role === 'teacher' && (
-          <Link to="/teacher/dashboard" className="btn" style={{ marginRight: 8 }}>
-            Dashboard
-          </Link>
+            <Link to="/documents" className="btn" style={{ marginRight: 8 }}>
+              Library
+            </Link>
+
+            {/* Dynamic Dashboard Button */}
+            {role === 'teacher' && (
+              <Link to="/teacher/dashboard" className="btn" style={{ marginRight: 8 }}>
+                Teacher Dashboard
+              </Link>
+            )}
+            {role === 'parent' && (
+              <Link to="/parent-dashboard" className="btn" style={{ marginRight: 8 }}>
+                Parent Dashboard
+              </Link>
+            )}
+            {role === 'student' && (
+              <Link to="/student-dashboard" className="btn" style={{ marginRight: 8 }}>
+                Student Dashboard
+              </Link>
+            )}
+
+            <Link to="/profile" className="btn" style={{ marginRight: 8 }}>
+              Profile
+            </Link>
+          </>
         )}
-
-        <Link to="/profile" className="btn" style={{ marginRight: 8 }}>
-          Profile
-        </Link>
-
-        <Link to="/student-dashboard" className="btn">
-          Student Dashboard
-        </Link>
       </div>
       
       <div style={{ 
@@ -150,7 +166,7 @@ const Navbar = () => {
         marginRight: '2rem',
       }}>
         {isAuthenticated ? (
-          // User is logged in - show user info and logout
+          // user is logged in, show user info and logout
           <>
             <span style={{
               color: 'var(--rk-dark)',

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Forgot Username{% endblock %}
+{% block content %}
+<style>
+  .forgot-shell { max-width: 760px; margin: 0 auto; padding: 120px 20px 70px; }
+  .forgot-card { background: rgba(255,255,255,0.95); border: 1px solid rgba(186,230,253,0.95); border-radius: 28px; padding: 30px; box-shadow: 0 24px 50px rgba(10,37,64,0.12); }
+  .forgot-card h1 { margin: 0 0 10px; font-family: "Fredoka", sans-serif; color: #0f172a; }
+  .forgot-card p { color: #64748b; line-height: 1.7; }
+  .form-field label { display:block; margin-bottom:8px; font-weight:700; color:#1e293b; }
+  .submit-btn { margin-top:16px; border:0; border-radius:16px; padding:14px 18px; color:#fff; font-size:1rem; font-weight:800; background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); cursor:pointer; }
+  .result-box { margin-top:18px; padding:16px; border-radius:16px; background:#ecfeff; border:1px solid #a5f3fc; color:#155e75; line-height:1.7; }
+</style>
+<section class="forgot-shell">
+  <div class="forgot-card">
+    <h1>Forgot Username</h1>
+    <p>Enter the email on your account and we will help you find the username.</p>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-field">
+        <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+        {{ form.email }}
+        {% if form.email.errors %}<div style="margin-top:6px;color:#b91c1c;">{{ form.email.errors }}</div>{% endif %}
+      </div>
+      <button type="submit" class="submit-btn">Find Username</button>
+    </form>
+    {% if submitted_email %}
+      <div class="result-box">
+        {% if matched_user %}
+          Email: <code>{{ submitted_email }}</code><br>
+          Username: <code>{{ matched_user.username }}</code>
+        {% else %}
+          No active account was found for <code>{{ submitted_email }}</code>.
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

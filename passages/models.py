@@ -17,16 +17,54 @@ class SkillCategory(models.Model):
 class Profile(models.Model):
     ROLE_TEACHER = 'teacher'
     ROLE_STUDENT = 'student'
+    ROLE_PARENT = 'parent'
+    ROLE_ADMIN = 'admin'   
+
     ROLE_CHOICES = [
         (ROLE_TEACHER, 'Teacher'),
         (ROLE_STUDENT, 'Student'),
+        (ROLE_PARENT, 'Parent'),
+        (ROLE_ADMIN, 'Admin'),
     ]
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default=ROLE_STUDENT)
 
+    email_verified = models.BooleanField(default=False)
+    teacher_approved = models.BooleanField(default=False)
+    
+    # Student specific
+    grade = models.PositiveSmallIntegerField(null=True, blank=True)
+    
+    # Teacher specific
+    class_size = models.PositiveSmallIntegerField(null=True, blank=True)
+    
+    # Parent specific
+    relationship = models.CharField(max_length=50, blank=True)
+
     def __str__(self):
         return f"{self.user.username} ({self.role})"
+    
+class ParentLink(models.Model):
+    parent = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="children_links",
+        limit_choices_to={"profile__role": "parent"},
+    )
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="parent_links",
+        limit_choices_to={"profile__role": "student"},
+    )
+    relationship = models.CharField(max_length=50, blank=True)
+
+    class Meta:
+        unique_together = ("parent", "student")
+        
+    def __str__(self):
+        return f"{self.parent.username} -> {self.student.username}"
 
 class Classroom(models.Model):
     name = models.CharField(max_length=255)

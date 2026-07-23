@@ -1,6 +1,5 @@
-// src/Login.jsx
 import React, { useEffect, useState } from 'react';
-import { authAPI } from '../api';            // <-- from your api.js
+import { authAPI } from '../api';           
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
 
@@ -9,6 +8,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   // Get CSRF cookie once so POSTs include X-CSRFToken automatically

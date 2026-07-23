@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Create a Teacher Account{% endblock %}
+{% block content %}
+<style>
+  .register-shell {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 120px 20px 70px;
+}
+
+ .register-card {
+  width: 100%;
+  max-width: 420px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(186, 230, 253, 0.9);
+  padding: 28px 24px;
+  box-shadow: 0 20px 40px rgba(10, 37, 64, 0.12);
+}
+
+  .register-card h1 {
+    margin: 0 0 8px;
+    color: #0f172a;
+    font-size: 2rem;
+    font-family: "Fredoka", sans-serif;
+    text-align: center;
+  }
+
+  .register-card p {
+    margin: 0 0 24px;
+    color: #64748b;
+    line-height: 1.65;
+    text-align: center;
+  }
+
+  .form-grid {
+    display: grid;
+    gap: 16px;
+  }
+
+  .form-errors {
+    margin-bottom: 18px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    font-size: 0.94rem;
+  }
+
+  .form-field label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .auth-input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #cbd5e1;
+    border-radius: 16px;
+    padding: 13px 16px;
+    font-size: 1rem;
+  }
+
+  .submit-btn {
+    display: block;
+    width: auto;
+    min-width: 260px;
+    margin: 24px auto 0;
+    border: 0;
+    border-radius: 14px;
+    padding: 14px 24px;
+    color: #fff;
+    font-weight: 800;
+    background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+    cursor: pointer;
+  }
+
+  .register-links {
+    margin-top: 18px;
+    text-align: center;
+  }
+
+  .register-links a {
+    color: #2563eb;
+    font-weight: 700;
+    text-decoration: none;
+  }
+</style>
+
+<section class="register-shell">
+  <div class="register-card">
+    <h1>Create a Teacher Account</h1>
+    <p>Teacher accounts are reviewed and approved before access is granted.</p>
+
+    <form method="post" action="{% url 'core:register_teacher' %}">
+      {% csrf_token %}
+
+      {% if teacher_form.non_field_errors %}
+        <div class="form-errors">{{ teacher_form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="form-grid">
+        {% for field in teacher_form %}
+          <div class="form-field">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+              <div class="form-errors">{{ field.errors }}</div>
+            {% endif %}
+            {% if field.help_text %}
+              <div style="color:#64748b;font-size:0.9rem;margin-top:6px;">
+                {{ field.help_text|safe }}
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+
+      <button type="submit" class="submit-btn">
+        Create Teacher Account
+      </button>
+    </form>
+
+    <p class="register-links">
+      Looking to create a student or parent account?
+      <a href="{% url 'core:register' %}">Go here</a>
+    </p>
+
+    <p class="register-links">
+      Already have an account?
+      <a href="{% url 'core:login' %}">Log in</a>
+    </p>
+  </div>
+</section>
+
+{% endblock %}

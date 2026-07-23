@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Email Verification{% endblock %}
+{% block content %}
+<section style="max-width:760px;margin:0 auto;padding:120px 20px 70px;">
+  <div style="background:rgba(255,255,255,0.95);border:1px solid rgba(186,230,253,0.95);border-radius:28px;padding:30px;box-shadow:0 24px 50px rgba(10,37,64,0.12);">
+    {% if verification_success %}
+      <h1 style="margin:0 0 10px;font-family:'Fredoka',sans-serif;color:#0f172a;">Email Verified</h1>
+      <p style="color:#64748b;line-height:1.7;">
+        {% if verified_user.role == "teacher" and not verified_user.teacher_approved %}
+          Your email is confirmed. A site admin still needs to approve your teacher account before you can log in.
+        {% else %}
+          Your email is confirmed and your account is ready.
+        {% endif %}
+      </p>
+    {% else %}
+      <h1 style="margin:0 0 10px;font-family:'Fredoka',sans-serif;color:#0f172a;">Verification Link Invalid</h1>
+      <p style="color:#64748b;line-height:1.7;">
+        This verification link is invalid or has expired. Register again if you still need an account.
+      </p>
+    {% endif %}
+    <a href="{{ next_url }}" style="display:inline-flex;margin-top:10px;padding:12px 16px;border-radius:14px;background:linear-gradient(135deg,#0ea5e9 0%,#2563eb 100%);color:#fff;text-decoration:none;font-weight:800;">Continue</a>
+  </div>
+</section>
+{% endblock %}
