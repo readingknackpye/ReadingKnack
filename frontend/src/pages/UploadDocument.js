@@ -4,8 +4,19 @@ import {
   documentsAPI,
   gradeLevelsAPI,
   skillCategoriesAPI,
+  topicsAPI,
   authAPI,
 } from '../api';
+const PROGRAM_OPTIONS = [
+  { value: 'standard', label: 'Standard Reading' },
+  { value: 'shsat', label: 'SHSAT' },
+  { value: 'sat', label: 'SAT Reading & Writing' },
+];
+const DIFFICULTY_OPTIONS = [
+  { value: 'easy', label: 'Easy' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'hard', label: 'Hard' },
+];
 const SUPPORTED_FILE_EXTENSIONS = ['.docx', '.pdf'];
 const SUPPORTED_FILE_TYPES = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -17,10 +28,14 @@ const UploadDocument = () => {
     title: '',
     file: null,
     grade_level: '',
-    skill_category: ''
+    skill_category: '',
+    program: '',
+    difficulty: '',
+    topic: ''
   });
   const [gradeLevels, setGradeLevels] = useState([]);
   const [skillCategories, setSkillCategories] = useState([]);
+  const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -46,12 +61,14 @@ const fetchCurrentUser = async () => {
 };
   const fetchOptions = async () => {
     try {
-      const [gradeLevelsRes, skillCategoriesRes] = await Promise.all([
+      const [gradeLevelsRes, skillCategoriesRes, topicsRes] = await Promise.all([
         gradeLevelsAPI.getAll(),
-        skillCategoriesAPI.getAll()
+        skillCategoriesAPI.getAll(),
+        topicsAPI.getAll()
       ]);
       setGradeLevels(gradeLevelsRes.data);
       setSkillCategories(skillCategoriesRes.data);
+      setTopics(topicsRes.data);
     } catch (err) {
       console.error('Error fetching options:', err);
     }
@@ -129,6 +146,15 @@ const fetchCurrentUser = async () => {
       }
       if (formData.skill_category) {
         uploadData.append('skill_category', formData.skill_category);
+      }
+      if (formData.program) {
+        uploadData.append('program', formData.program);
+      }
+      if (formData.difficulty) {
+        uploadData.append('difficulty', formData.difficulty);
+      }
+      if (formData.topic) {
+        uploadData.append('topic', formData.topic);
       }
       // Step 1: Upload the document
       const response = await documentsAPI.upload(uploadData);
@@ -254,6 +280,54 @@ const fetchCurrentUser = async () => {
               <option value="">Select a skill category (optional)</option>
               {skillCategories.map(category => (
                 <option key={category.id} value={category.id}>{category.name}</option>
+              ))}
+            </select>
+          </div>
+          {/* Program */}
+          <div className="form-group">
+            <label htmlFor="program" className="form-label">Program</label>
+            <select
+              id="program"
+              name="program"
+              value={formData.program}
+              onChange={handleInputChange}
+              className="form-input"
+            >
+              <option value="">Select a program (optional)</option>
+              {PROGRAM_OPTIONS.map(option => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+          {/* Difficulty */}
+          <div className="form-group">
+            <label htmlFor="difficulty" className="form-label">Difficulty</label>
+            <select
+              id="difficulty"
+              name="difficulty"
+              value={formData.difficulty}
+              onChange={handleInputChange}
+              className="form-input"
+            >
+              <option value="">Select a difficulty (optional)</option>
+              {DIFFICULTY_OPTIONS.map(option => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+          {/* Topic */}
+          <div className="form-group">
+            <label htmlFor="topic" className="form-label">Topic</label>
+            <select
+              id="topic"
+              name="topic"
+              value={formData.topic}
+              onChange={handleInputChange}
+              className="form-input"
+            >
+              <option value="">Select a topic (optional)</option>
+              {topics.map(topic => (
+                <option key={topic.id} value={topic.id}>{topic.name}</option>
               ))}
             </select>
           </div>

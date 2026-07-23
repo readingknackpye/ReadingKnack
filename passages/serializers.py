@@ -55,6 +55,12 @@ class SkillCategorySerializer(serializers.ModelSerializer):
         model = SkillCategory
         fields = '__all__'
 
+class TopicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Topic
+        fields = ['id', 'name']
+
+
 class UploadedDocumentSerializer(serializers.ModelSerializer):
     grade_level = serializers.PrimaryKeyRelatedField(
         queryset=GradeLevel.objects.all(), required=False, allow_null=True

@@ -8,7 +8,7 @@ from django.middleware.csrf import get_token
 from django.http import JsonResponse
 from passages.models import (
     UploadedDocument, QuizQuestion, QuizAnswer,
-    QuizResponse, UserAnswer, GradeLevel, SkillCategory, Classroom
+    QuizResponse, UserAnswer, GradeLevel, SkillCategory, Classroom, Topic
 )
 from django import forms
 from docx import Document
@@ -23,7 +23,7 @@ from rest_framework.exceptions import ValidationError
 from .serializers import (
     UploadedDocumentSerializer, QuizQuestionSerializer, QuizAnswerSerializer,
     QuizResponseSerializer, DocumentDetailSerializer, GradeLevelSerializer,
-    SkillCategorySerializer, UserRegistrationSerializer, UserSerializer,StudentDashboardSerializer,
+    SkillCategorySerializer, TopicSerializer, UserRegistrationSerializer, UserSerializer,StudentDashboardSerializer,
     ClassroomSerializer
 )
 from django.http import JsonResponse
@@ -298,6 +298,12 @@ class GradeLevelViewSet(viewsets.ModelViewSet):
 class SkillCategoryViewSet(viewsets.ModelViewSet):
     queryset = SkillCategory.objects.all()
     serializer_class = SkillCategorySerializer
+
+
+
+class TopicViewSet(viewsets.ModelViewSet):
+    queryset = Topic.objects.all().order_by('name')
+    serializer_class = TopicSerializer
 
 
 class ClassroomViewSet(viewsets.ModelViewSet):
