@@ -128,4 +128,9 @@ export const skillCategoriesAPI = {
   getAll: () => api.get('/skill-categories/'),
 };
 
+// Topics API
+export const topicsAPI = {
+  getAll: () => api.get('/topics/'),
+};
+
 export default api; 

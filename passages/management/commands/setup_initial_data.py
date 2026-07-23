@@ -1,8 +1,8 @@
 from django.core.management.base import BaseCommand
-from passages.models import GradeLevel, SkillCategory
+from passages.models import GradeLevel, SkillCategory, Topic
 
 class Command(BaseCommand):
-    help = 'Set up initial grade levels and skill categories for Reading Knack'
+    help = 'Set up initial grade levels, skill categories, and topics for Reading Knack'
 
     def handle(self, *args, **options):
         # Create grade levels
@@ -28,6 +28,16 @@ class Command(BaseCommand):
             SkillCategory.objects.get_or_create(name=skill)
             self.stdout.write(f'Created skill category: {skill}')
         
+        # Create topics (subject matter of the passage)
+        topics = [
+            'History', 'Science', 'Nature', 'Geography',
+            'Biography', 'Current Events', 'Literature', 'Social Studies'
+        ]
+
+        for topic in topics:
+            Topic.objects.get_or_create(name=topic)
+            self.stdout.write(f'Created topic: {topic}')
+
         self.stdout.write(
             self.style.SUCCESS('Successfully set up initial data!')
         ) 
