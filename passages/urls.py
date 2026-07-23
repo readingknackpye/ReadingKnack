@@ -8,7 +8,7 @@ from .views import (
     SubmitQuizView, UserRegistrationView, UserLoginView, UserLogoutView, UserProfileView,
     UploadedDocumentViewSet, QuizQuestionViewSet, QuizAnswerViewSet,
     QuizResponseViewSet, GradeLevelViewSet, SkillCategoryViewSet, TopicViewSet, DocumentDetailView,
-    ClassroomViewSet, StudentDashboardView
+    ClassroomViewSet, StudentDashboardView, MyAssignmentsView
 )
 
 # CSRF ping for frontend
@@ -48,6 +48,6 @@ urlpatterns = [
     StudentDashboardView.as_view(),
     name='student_dashboard'
 ),
-    
+    path('api/my-assignments/', MyAssignmentsView.as_view(), name='my_assignments'),
 ]
 

@@ -1,11 +1,17 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { quizAPI } from '../api';
+import { Link } from 'react-router-dom';
+import { quizAPI, classroomsAPI, assignmentsAPI } from '../api';
 import './StudentDashboard.css';
 
 const StudentDashboard = () => {
   const [testHistory, setTestHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [joinCode, setJoinCode] = useState('');
+  const [joining, setJoining] = useState(false);
+  const [joinResult, setJoinResult] = useState(null); // { type: 'success' | 'error', message }
+  const [myAssignments, setMyAssignments] = useState([]);
+  const [assignmentsLoading, setAssignmentsLoading] = useState(true);
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -28,88 +34,122 @@ const StudentDashboard = () => {
       }
     };
 
+    const loadAssignments = async () => {
+      try {
+        setAssignmentsLoading(true);
+        const response = await assignmentsAPI.mine();
+        setMyAssignments(response.data || []);
+      } catch (err) {
+        console.error('Assignments error:', err);
+      } finally {
+        setAssignmentsLoading(false);
+      }
+    };
+
     loadDashboard();
+    loadAssignments();
   }, []);
 
+  const handleJoinClass = async (e) => {
+    e.preventDefault();
+    const code = joinCode.trim();
+    if (!code) return;
+
+    try {
+      setJoining(true);
+      setJoinResult(null);
+      const response = await classroomsAPI.join(code);
+      setJoinResult({ type: 'success', message: `You've joined ${response.data.name}! Your teacher can now see your progress.` });
+      setJoinCode('');
+    } catch (err) {
+      console.error('Join class error:', err);
+      const message = err.response?.data?.detail || 'Could not join that class. Double-check the code and try again.';
+      setJoinResult({ type: 'error', message });
+    } finally {
+      setJoining(false);
+    }
+  };
+
   const formatDuration = (seconds) => {
-  if (!seconds || seconds <= 0) {
-    return 'N/A';
-  }
-
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-
-  if (minutes === 0) {
-    return `${remainingSeconds} sec`;
-  }
-
-  return `${minutes} min ${remainingSeconds} sec`;
-};
-
-const formatDate = (dateValue) => {
-  if (!dateValue) {
-    return 'N/A';
-  }
-
-  return new Date(dateValue).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-};
-
-const getScoreClass = (percentage) => {
-  const numericScore = Number(percentage || 0);
-
-  if (numericScore >= 80) {
-    return 'score-high';
-  }
-
-  if (numericScore >= 60) {
-    return 'score-medium';
-  }
-
-  return 'score-low';
-};
-
-const stats = useMemo(() => {
-  if (!testHistory || testHistory.length === 0) {
-    return null;
-  }
-
-  const totalTests = testHistory.length;
-
-  const avgScore = Math.round(
-    testHistory.reduce((sum, t) => sum + (t.percentage || 0), 0) / totalTests
-  );
-
-  const totalSeconds = testHistory.reduce(
-    (sum, t) => sum + (t.duration_seconds || 0),
-    0
-  );
-  const formattedTotalTime = formatDuration(totalSeconds);
-
-  // group by skill, average percentage per skill, find the lowest
-  const skillTotals = {};
-  testHistory.forEach((t) => {
-    const skill = t.skill || 'N/A';
-    if (!skillTotals[skill]) {
-      skillTotals[skill] = { sum: 0, count: 0 };
+    if (!seconds || seconds <= 0) {
+      return 'N/A';
     }
-    skillTotals[skill].sum += t.percentage || 0;
-    skillTotals[skill].count += 1;
-  });
 
-  let weakestSkill = { name: 'N/A', avg: 0 };
-  Object.entries(skillTotals).forEach(([name, { sum, count }]) => {
-    const avg = Math.round(sum / count);
-    if (weakestSkill.name === 'N/A' || avg < weakestSkill.avg) {
-      weakestSkill = { name, avg };
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+
+    if (minutes === 0) {
+      return `${remainingSeconds} sec`;
     }
-  });
 
-  return { totalTests, avgScore, formattedTotalTime, weakestSkill };
-}, [testHistory]);
+    return `${minutes} min ${remainingSeconds} sec`;
+  };
+
+  const formatDate = (dateValue) => {
+    if (!dateValue) {
+      return 'N/A';
+    }
+
+    return new Date(dateValue).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
+  const getScoreClass = (percentage) => {
+    const numericScore = Number(percentage || 0);
+
+    if (numericScore >= 80) {
+      return 'score-high';
+    }
+
+    if (numericScore >= 60) {
+      return 'score-medium';
+    }
+
+    return 'score-low';
+  };
+
+  // automatically calculate stats whenever testHistory changes
+  const stats = useMemo(() => {
+    if (!testHistory || testHistory.length === 0) {
+      return null;
+    }
+
+    const totalTests = testHistory.length;
+
+    const avgScore = Math.round(
+      testHistory.reduce((sum, t) => sum + (t.percentage || 0), 0) / totalTests
+    );
+
+    const totalSeconds = testHistory.reduce(
+      (sum, t) => sum + (t.duration_seconds || 0),
+      0
+    );
+    const formattedTotalTime = formatDuration(totalSeconds);
+
+    // group by skill, average percentage per skill, find the lowest
+    const skillTotals = {};
+    testHistory.forEach((t) => {
+      const skill = t.skill || 'N/A';
+      if (!skillTotals[skill]) {
+        skillTotals[skill] = { sum: 0, count: 0 };
+      }
+      skillTotals[skill].sum += t.percentage || 0;
+      skillTotals[skill].count += 1;
+    });
+
+    let weakestSkill = { name: 'N/A', avg: 0 };
+    Object.entries(skillTotals).forEach(([name, { sum, count }]) => {
+      const avg = Math.round(sum / count);
+      if (weakestSkill.name === 'N/A' || avg < weakestSkill.avg) {
+        weakestSkill = { name, avg };
+      }
+    });
+
+    return { totalTests, avgScore, formattedTotalTime, weakestSkill };
+  }, [testHistory]);
 
   if (loading) {
     return (
@@ -136,6 +176,62 @@ const stats = useMemo(() => {
       <section className="student-dashboard-header">
         <h1>Student Dashboard</h1>
         <p>View your previous tests and performance.</p>
+      </section>
+
+      {/* Join a Class Section */}
+      <section className="join-class-card">
+        <div className="join-class-text">
+          <h2>Join a Class</h2>
+          <p>Enter the code your teacher shared with you to join their class.</p>
+        </div>
+        <form className="join-class-form" onSubmit={handleJoinClass}>
+          <input
+            type="text"
+            placeholder="e.g. 7F3K9X"
+            value={joinCode}
+            onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+            maxLength={6}
+            className="join-class-input"
+            required
+          />
+          <button type="submit" className="join-class-button" disabled={joining}>
+            {joining ? 'Joining...' : 'Join Class'}
+          </button>
+        </form>
+        {joinResult && (
+          <div className={`join-class-result join-class-result-${joinResult.type}`}>
+            {joinResult.message}
+          </div>
+        )}
+      </section>
+
+      {/* My Assignments Section */}
+      <section className="student-dashboard-content assignments-card">
+        <h2>My Assignments</h2>
+
+        {assignmentsLoading ? (
+          <div className="dashboard-empty">Loading assignments...</div>
+        ) : myAssignments.length === 0 ? (
+          <div className="dashboard-empty">Your teacher hasn't assigned any passages yet.</div>
+        ) : (
+          <ul className="assignments-list">
+            {myAssignments.map((a) => (
+              <li className="assignment-item" key={a.id}>
+                <div className="assignment-info">
+                  <strong>{a.document_title}</strong>
+                  <small>
+                    {a.classroom_name}
+                    {a.due_at ? ` • Due ${new Date(a.due_at).toLocaleString()}` : ' • No due date'}
+                  </small>
+                  {a.instructions && <p className="assignment-instructions">{a.instructions}</p>}
+                </div>
+                <Link className="btn join-class-button assignment-start-button" to={`/quiz/${a.document}`}>
+                  Start
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {/* Stat Card Section */}

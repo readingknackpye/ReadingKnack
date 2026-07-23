@@ -1,6 +1,13 @@
+import random
+import string
+
 from django.db import models
 from django.contrib.auth.models import User
 from django.conf import settings
+
+
+def generate_join_code():
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
 class GradeLevel(models.Model):
     name = models.CharField(max_length=20)
@@ -31,10 +38,36 @@ class Profile(models.Model):
 class Classroom(models.Model):
     name = models.CharField(max_length=255)
     teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='classrooms')
+    students = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, related_name='enrolled_classrooms', blank=True
+    )
+    join_code = models.CharField(max_length=6, unique=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.join_code:
+            code = generate_join_code()
+            while Classroom.objects.filter(join_code=code).exists():
+                code = generate_join_code()
+            self.join_code = code
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
+
+class Assignment(models.Model):
+    classroom = models.ForeignKey(Classroom, on_delete=models.CASCADE, related_name='assignments')
+    document = models.ForeignKey('UploadedDocument', on_delete=models.CASCADE, related_name='assignments')
+    assigned_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='assignments_created')
+    instructions = models.TextField(blank=True)
+    due_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.document.title} -> {self.classroom.name}"
 
 class Topic(models.Model):
     name = models.CharField(max_length=120, unique=True)

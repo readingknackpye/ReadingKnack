@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from .models import (
     UploadedDocument, GradeLevel, SkillCategory,
-    QuizQuestion, QuizAnswer, QuizResponse, UserAnswer, Profile, Classroom, Topic
+    QuizQuestion, QuizAnswer, QuizResponse, UserAnswer, Profile, Classroom, Topic, Assignment
 )
 
 class UserSerializer(serializers.ModelSerializer):
@@ -39,11 +39,35 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         Profile.objects.create(user=user, role=role)
         return user
 
+class ClassroomStudentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name', 'last_name', 'email']
+
 class ClassroomSerializer(serializers.ModelSerializer):
+    students = ClassroomStudentSerializer(many=True, read_only=True)
+    student_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Classroom
-        fields = ['id', 'name', 'teacher', 'created_at']
-        read_only_fields = ['id', 'teacher', 'created_at']
+        fields = ['id', 'name', 'teacher', 'join_code', 'students', 'student_count', 'created_at']
+        read_only_fields = ['id', 'teacher', 'join_code', 'students', 'created_at']
+
+    def get_student_count(self, obj):
+        return obj.students.count()
+
+class AssignmentSerializer(serializers.ModelSerializer):
+    document_title = serializers.CharField(source='document.title', read_only=True)
+    classroom_name = serializers.CharField(source='classroom.name', read_only=True)
+    document = serializers.PrimaryKeyRelatedField(queryset=UploadedDocument.objects.all())
+
+    class Meta:
+        model = Assignment
+        fields = [
+            'id', 'classroom', 'classroom_name', 'document', 'document_title',
+            'instructions', 'due_at', 'created_at',
+        ]
+        read_only_fields = ['id', 'classroom', 'created_at']
 
 class GradeLevelSerializer(serializers.ModelSerializer):
     class Meta:

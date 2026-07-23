@@ -61,6 +61,10 @@ class ProfileAdmin(admin.ModelAdmin):
 
 @admin.register(Classroom)
 class ClassroomAdmin(admin.ModelAdmin):
-    list_display = ['name', 'teacher', 'created_at']
+    list_display = ['name', 'teacher', 'join_code', 'student_count', 'created_at']
     list_filter = ['created_at']
-    search_fields = ['name', 'teacher__username']
+    search_fields = ['name', 'teacher__username', 'join_code']
+    readonly_fields = ['join_code']
+
+    def student_count(self, obj):
+        return obj.students.count()
