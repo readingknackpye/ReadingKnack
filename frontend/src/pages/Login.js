@@ -22,8 +22,8 @@ const Login = () => {
     setLoading(true);
     
     try {
-      // Attempt to login
       const loginResponse = await authAPI.login({ username, password });
+      const user = loginResponse.data?.user;
       
       // Get user profile after successful login
       const userResponse = await authAPI.me();

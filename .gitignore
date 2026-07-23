@@ -8,3 +8,4 @@ media/
 django.log
 frontend/react.log
 *.log
+cookies.txt

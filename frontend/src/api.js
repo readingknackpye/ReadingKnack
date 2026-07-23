@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL ||
+  `${window.location.protocol}//${window.location.hostname}:8000/api`;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -104,6 +106,16 @@ export const classroomsAPI = {
 
   // Student: join a class with a teacher-shared code
   join: (code) => api.post('/classrooms/join/', { code }),
+};
+
+// Assignments API
+export const assignmentsAPI = {
+  // Teacher: list/create passage assignments for one of their classes
+  listForClassroom: (classroomId) => api.get(`/classrooms/${classroomId}/assignments/`),
+  create: (classroomId, data) => api.post(`/classrooms/${classroomId}/assignments/`, data),
+
+  // Student: everything assigned across classes they've joined
+  mine: () => api.get('/my-assignments/'),
 };
 
 // Grade Levels API

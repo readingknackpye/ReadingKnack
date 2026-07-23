@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { quizAPI, classroomsAPI } from '../api';
+import { Link } from 'react-router-dom';
+import { quizAPI, classroomsAPI, assignmentsAPI } from '../api';
 import './StudentDashboard.css';
 
 const StudentDashboard = () => {
@@ -9,6 +10,8 @@ const StudentDashboard = () => {
   const [joinCode, setJoinCode] = useState('');
   const [joining, setJoining] = useState(false);
   const [joinResult, setJoinResult] = useState(null); // { type: 'success' | 'error', message }
+  const [myAssignments, setMyAssignments] = useState([]);
+  const [assignmentsLoading, setAssignmentsLoading] = useState(true);
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -31,7 +34,20 @@ const StudentDashboard = () => {
       }
     };
 
+    const loadAssignments = async () => {
+      try {
+        setAssignmentsLoading(true);
+        const response = await assignmentsAPI.mine();
+        setMyAssignments(response.data || []);
+      } catch (err) {
+        console.error('Assignments error:', err);
+      } finally {
+        setAssignmentsLoading(false);
+      }
+    };
+
     loadDashboard();
+    loadAssignments();
   }, []);
 
   const handleJoinClass = async (e) => {
@@ -54,60 +70,85 @@ const StudentDashboard = () => {
     }
   };
 
+  const formatDuration = (seconds) => {
+    if (!seconds || seconds <= 0) {
+      return 'N/A';
+    }
+
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+
+    if (minutes === 0) {
+      return `${remainingSeconds} sec`;
+    }
+
+    return `${minutes} min ${remainingSeconds} sec`;
+  };
+
+  const formatDate = (dateValue) => {
+    if (!dateValue) {
+      return 'N/A';
+    }
+
+    return new Date(dateValue).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
+  const getScoreClass = (percentage) => {
+    const numericScore = Number(percentage || 0);
+
+    if (numericScore >= 80) {
+      return 'score-high';
+    }
+
+    if (numericScore >= 60) {
+      return 'score-medium';
+    }
+
+    return 'score-low';
+  };
+
   // automatically calculate stats whenever testHistory changes
   const stats = useMemo(() => {
-    if (!testHistory || testHistory.length === 0) return null;
+    if (!testHistory || testHistory.length === 0) {
+      return null;
+    }
 
-    let totalPercentage = 0;
-    let totalSeconds = 0;
-    const skillStats = {};
+    const totalTests = testHistory.length;
 
-    testHistory.forEach(test => {
-      // average score
-      totalPercentage += (test.percentage || 0);
+    const avgScore = Math.round(
+      testHistory.reduce((sum, t) => sum + (t.percentage || 0), 0) / totalTests
+    );
 
-      // total duration in a quiz in MM:SS format
-      if (test.duration && typeof test.duration === 'string') {
-        const [mins, secs] = test.duration.split(':').map(Number);
-        if (!isNaN(mins) && !isNaN(secs)) {
-          totalSeconds += (mins * 60) + secs;
-        }
+    const totalSeconds = testHistory.reduce(
+      (sum, t) => sum + (t.duration_seconds || 0),
+      0
+    );
+    const formattedTotalTime = formatDuration(totalSeconds);
+
+    // group by skill, average percentage per skill, find the lowest
+    const skillTotals = {};
+    testHistory.forEach((t) => {
+      const skill = t.skill || 'N/A';
+      if (!skillTotals[skill]) {
+        skillTotals[skill] = { sum: 0, count: 0 };
       }
-
-      // identify what makes a weak skill
-      const skill = test.skill || 'Uncategorized';
-      if (!skillStats[skill]) {
-        skillStats[skill] = { totalPct: 0, count: 0 };
-      }
-      skillStats[skill].totalPct += (test.percentage || 0);
-      skillStats[skill].count += 1;
+      skillTotals[skill].sum += t.percentage || 0;
+      skillTotals[skill].count += 1;
     });
 
-    const avgScore = Math.round(totalPercentage / testHistory.length);
-    const totalMins = Math.floor(totalSeconds / 60);
-    const formattedTotalTime = `${totalMins}m ${totalSeconds % 60}s`;
-
-    // find what the weakest skill is
-    let weakestSkill = 'N/A';
-    let lowestAvg = 100;
-    
-    Object.keys(skillStats).forEach(skill => {
-      // ignore uncategorized if there are actual skills to measure
-      if (skill === 'Uncategorized' && Object.keys(skillStats).length > 1) return;
-      
-      const avg = skillStats[skill].totalPct / skillStats[skill].count;
-      if (avg <= lowestAvg) {
-        lowestAvg = avg;
-        weakestSkill = skill;
+    let weakestSkill = { name: 'N/A', avg: 0 };
+    Object.entries(skillTotals).forEach(([name, { sum, count }]) => {
+      const avg = Math.round(sum / count);
+      if (weakestSkill.name === 'N/A' || avg < weakestSkill.avg) {
+        weakestSkill = { name, avg };
       }
     });
 
-    return {
-      totalTests: testHistory.length,
-      avgScore,
-      formattedTotalTime,
-      weakestSkill: { name: weakestSkill, avg: Math.round(lowestAvg) }
-    };
+    return { totalTests, avgScore, formattedTotalTime, weakestSkill };
   }, [testHistory]);
 
   if (loading) {
@@ -164,6 +205,35 @@ const StudentDashboard = () => {
         )}
       </section>
 
+      {/* My Assignments Section */}
+      <section className="student-dashboard-content assignments-card">
+        <h2>My Assignments</h2>
+
+        {assignmentsLoading ? (
+          <div className="dashboard-empty">Loading assignments...</div>
+        ) : myAssignments.length === 0 ? (
+          <div className="dashboard-empty">Your teacher hasn't assigned any passages yet.</div>
+        ) : (
+          <ul className="assignments-list">
+            {myAssignments.map((a) => (
+              <li className="assignment-item" key={a.id}>
+                <div className="assignment-info">
+                  <strong>{a.document_title}</strong>
+                  <small>
+                    {a.classroom_name}
+                    {a.due_at ? ` • Due ${new Date(a.due_at).toLocaleString()}` : ' • No due date'}
+                  </small>
+                  {a.instructions && <p className="assignment-instructions">{a.instructions}</p>}
+                </div>
+                <Link className="btn join-class-button assignment-start-button" to={`/quiz/${a.document}`}>
+                  Start
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       {/* Stat Card Section */}
       {stats && (
         <section className="dashboard-stats">
@@ -208,32 +278,71 @@ const StudentDashboard = () => {
           <div className="dashboard-table-wrapper">
             <table className="dashboard-table">
               <thead>
-                <tr>
-                  <th>Test Name</th>
-                  <th>Grade Level</th>
-                  <th>Skill</th>
-                  <th>Time Spent</th>
-                  <th>Score</th>
-                  <th>Completed At</th>
-                </tr>
-              </thead>
+  <tr>
+    <th>📚 Test</th>
+    <th>🎓 Grade Level</th>
+    <th>⭐ Skill</th>
+    <th>⏱️ Time</th>
+    <th>🏆 Score</th>
+    <th>📅 Date</th>
+  </tr>
+</thead>
+
+  
+
               <tbody>
-                {testHistory.map((test) => (
-                  <tr key={test.id}>
-                    <td>{test.test_name || 'N/A'}</td>
-                    <td>{test.grade_level || 'N/A'}</td>
-                    <td>{test.skill || 'N/A'}</td>
-                    <td>{test.duration || 'N/A'}</td>
-                    <td>
-                      {test.score ?? 'N/A'} / {test.total_questions ?? 'N/A'}
-                      {test.percentage !== undefined ? ` (${test.percentage}%)` : ''}
-                    </td>
-                    <td>
-                      {test.submitted_at ? new Date(test.submitted_at).toLocaleString() : 'N/A'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+  {testHistory.map((test) => (
+    <tr key={test.id}>
+      <td>
+        <div className="test-name-cell">
+          <span className="test-icon">📘</span>
+
+          <div>
+            <strong>{test.test_name || 'N/A'}</strong>
+            <small>Reading Quiz</small>
+          </div>
+        </div>
+      </td>
+
+      <td>
+        <span className="dashboard-badge grade-badge">
+          🎓 {test.grade_level || 'N/A'}
+        </span>
+      </td>
+
+      <td>
+        <span className="dashboard-badge skill-badge">
+          ⭐ {test.skill || 'N/A'}
+        </span>
+      </td>
+
+      <td>
+        <span className="dashboard-badge time-badge">
+          ⏱️ {formatDuration(test.duration_seconds)}
+        </span>
+      </td>
+
+      <td>
+        <span
+          className={`score-badge ${getScoreClass(
+            test.percentage
+          )}`}
+        >
+          {test.score ?? 'N/A'} / {test.total_questions ?? 'N/A'}
+          {test.percentage !== undefined
+            ? ` • ${test.percentage}%`
+            : ''}
+        </span>
+      </td>
+
+      <td>
+        <span className="dashboard-badge date-badge">
+          📅 {formatDate(test.submitted_at)}
+        </span>
+      </td>
+    </tr>
+  ))}
+</tbody>
             </table>
           </div>
         )}

@@ -159,7 +159,6 @@ print(f"DEBUG: AWS_STORAGE_BUCKET_NAME = {os.getenv('AWS_STORAGE_BUCKET_NAME', '
 print(f"DEBUG: AWS_S3_ENDPOINT_URL = {os.getenv('AWS_S3_ENDPOINT_URL', 'NOT_SET')}")
 
 if USE_S3:
-    print("DEBUG: Configuring S3 storage...")
     # S3-compatible storage backend
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
     
@@ -251,12 +250,12 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # CSRF Configuration
-CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
+CSRF_COOKIE_SECURE = not DEBUG  # Only require HTTPS for CSRF cookies in production, allowing HTTP during local development
 CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript access for AJAX requests
 CSRF_USE_SESSIONS = True  # Store CSRF token in session instead of cookie
 
 # Session Configuration
-SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_COOKIE_SECURE = not DEBUG  # Only require HTTPS for session cookies in production, allowing HTTP during local development
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_AGE = 1209600  # 2 weeks in seconds
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False

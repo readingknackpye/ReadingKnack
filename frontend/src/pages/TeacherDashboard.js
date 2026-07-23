@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { classroomsAPI } from '../api';
+import { classroomsAPI, documentsAPI, assignmentsAPI } from '../api';
 import './TeacherDashboard.css';
 
 const TeacherDashboard = () => {
@@ -13,6 +13,10 @@ const TeacherDashboard = () => {
   const [expandedId, setExpandedId] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
   const [busyAction, setBusyAction] = useState(null); // `${type}-${id}` while a request is in flight
+  const [documents, setDocuments] = useState([]);
+  const [assignmentsByClass, setAssignmentsByClass] = useState({}); // { [classId]: Assignment[] }
+  const [assignmentForms, setAssignmentForms] = useState({}); // { [classId]: { documentId, dueAt, instructions } }
+  const [assigning, setAssigning] = useState(null); // classId while a create request is in flight
 
   useEffect(() => {
     const stored = localStorage.getItem('user');
@@ -24,7 +28,62 @@ const TeacherDashboard = () => {
     }
 
     fetchClasses();
+    fetchDocuments();
   }, []);
+
+  const fetchDocuments = async () => {
+    try {
+      const response = await documentsAPI.getAll();
+      setDocuments(response.data);
+    } catch (err) {
+      console.error('Error fetching documents:', err);
+    }
+  };
+
+  const fetchAssignments = async (classId) => {
+    try {
+      const response = await assignmentsAPI.listForClassroom(classId);
+      setAssignmentsByClass(prev => ({ ...prev, [classId]: response.data }));
+    } catch (err) {
+      console.error('Error fetching assignments:', err);
+    }
+  };
+
+  const getAssignmentForm = (classId) =>
+    assignmentForms[classId] || { documentId: '', dueAt: '', instructions: '' };
+
+  const handleAssignmentFormChange = (classId, field, value) => {
+    setAssignmentForms(prev => ({
+      ...prev,
+      [classId]: { ...getAssignmentForm(classId), [field]: value },
+    }));
+  };
+
+  const handleCreateAssignment = async (classId, e) => {
+    e.preventDefault();
+    const form = getAssignmentForm(classId);
+    if (!form.documentId) return;
+
+    try {
+      setAssigning(classId);
+      setError(null);
+      const response = await assignmentsAPI.create(classId, {
+        document: form.documentId,
+        due_at: form.dueAt || null,
+        instructions: form.instructions,
+      });
+      setAssignmentsByClass(prev => ({
+        ...prev,
+        [classId]: [response.data, ...(prev[classId] || [])],
+      }));
+      setAssignmentForms(prev => ({ ...prev, [classId]: { documentId: '', dueAt: '', instructions: '' } }));
+    } catch (err) {
+      console.error('Error creating assignment:', err);
+      setError('Failed to assign passage. Please try again.');
+    } finally {
+      setAssigning(null);
+    }
+  };
 
   const fetchClasses = async () => {
     try {
@@ -112,7 +171,11 @@ const TeacherDashboard = () => {
   };
 
   const toggleExpanded = (id) => {
+    const opening = expandedId !== id;
     setExpandedId(prev => (prev === id ? null : id));
+    if (opening && !assignmentsByClass[id]) {
+      fetchAssignments(id);
+    }
   };
 
   const totalStudents = classes.reduce((sum, c) => sum + (c.student_count ?? c.students?.length ?? 0), 0);
@@ -248,6 +311,65 @@ const TeacherDashboard = () => {
                             })}
                           </ul>
                         )}
+
+                        <div className="assignmentsSection">
+                          <div className="classRosterHeader">
+                            <span>Assign a passage from the content library.</span>
+                          </div>
+
+                          <form className="assignmentForm" onSubmit={(e) => handleCreateAssignment(cls.id, e)}>
+                            <select
+                              className="editInput"
+                              value={getAssignmentForm(cls.id).documentId}
+                              onChange={(e) => handleAssignmentFormChange(cls.id, 'documentId', e.target.value)}
+                              required
+                            >
+                              <option value="">Select a passage...</option>
+                              {documents.map(doc => (
+                                <option key={doc.id} value={doc.id}>{doc.title}</option>
+                              ))}
+                            </select>
+                            <input
+                              type="datetime-local"
+                              className="editInput"
+                              value={getAssignmentForm(cls.id).dueAt}
+                              onChange={(e) => handleAssignmentFormChange(cls.id, 'dueAt', e.target.value)}
+                              title="Due date (optional)"
+                            />
+                            <input
+                              type="text"
+                              className="editInput"
+                              placeholder="Instructions (optional)"
+                              value={getAssignmentForm(cls.id).instructions}
+                              onChange={(e) => handleAssignmentFormChange(cls.id, 'instructions', e.target.value)}
+                            />
+                            <button
+                              type="submit"
+                              className="createClassButton"
+                              disabled={assigning === cls.id}
+                            >
+                              {assigning === cls.id ? 'Assigning...' : 'Assign'}
+                            </button>
+                          </form>
+
+                          {(assignmentsByClass[cls.id] || []).length === 0 ? (
+                            <div className="rosterEmpty">No passages assigned yet.</div>
+                          ) : (
+                            <ul className="rosterList">
+                              {assignmentsByClass[cls.id].map(a => (
+                                <li className="rosterItem" key={a.id}>
+                                  <div className="rosterInfo">
+                                    <span className="rosterName">{a.document_title}</span>
+                                    <span className="rosterEmail">
+                                      {a.due_at ? `Due ${new Date(a.due_at).toLocaleString()}` : 'No due date'}
+                                      {a.instructions ? ` — ${a.instructions}` : ''}
+                                    </span>
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>

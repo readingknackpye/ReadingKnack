@@ -8,7 +8,7 @@ from django.middleware.csrf import get_token
 from django.http import JsonResponse
 from passages.models import (
     UploadedDocument, QuizQuestion, QuizAnswer,
-    QuizResponse, UserAnswer, GradeLevel, SkillCategory, Classroom, Profile
+    QuizResponse, UserAnswer, GradeLevel, SkillCategory, Classroom, Profile, Assignment
 )
 from django import forms
 from docx import Document
@@ -24,7 +24,7 @@ from .serializers import (
     UploadedDocumentSerializer, QuizQuestionSerializer, QuizAnswerSerializer,
     QuizResponseSerializer, DocumentDetailSerializer, GradeLevelSerializer,
     SkillCategorySerializer, UserRegistrationSerializer, UserSerializer,StudentDashboardSerializer,
-    ClassroomSerializer
+    ClassroomSerializer, AssignmentSerializer
 )
 from django.http import JsonResponse
 import json
@@ -91,6 +91,31 @@ class UploadedDocumentViewSet(viewsets.ModelViewSet):
     authentication_classes = [CsrfExemptSessionAuthentication]
     queryset = UploadedDocument.objects.all().order_by('-uploaded_at')
     serializer_class = UploadedDocumentSerializer
+
+    def get_queryset(self):
+        """Filter by ?grade_level=&program=&difficulty=&topic=&skill_category=&search="""
+        queryset = super().get_queryset()
+        params = self.request.query_params
+
+        for field in ('grade_level', 'skill_category', 'topic'):
+            value = params.get(field)
+            if value:
+                queryset = queryset.filter(**{f'{field}_id': value})
+
+        for field in ('program', 'difficulty'):
+            value = params.get(field)
+            if value:
+                queryset = queryset.filter(**{field: value})
+
+        topic_name = params.get('topic_name')
+        if topic_name:
+            queryset = queryset.filter(topic__name__iexact=topic_name)
+
+        search = params.get('search')
+        if search:
+            queryset = queryset.filter(title__icontains=search)
+
+        return queryset
     
     def create(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
@@ -337,6 +362,33 @@ class ClassroomViewSet(viewsets.ModelViewSet):
         classroom.join_code = ''
         classroom.save()
         return Response(ClassroomSerializer(classroom).data)
+
+    @drf_action(detail=True, methods=['get', 'post'], url_path='assignments')
+    def assignments(self, request, pk=None):
+        """Teacher: list or create passage assignments for one of their own classes."""
+        classroom = self.get_object()
+
+        if request.method == 'GET':
+            qs = classroom.assignments.select_related('document')
+            return Response(AssignmentSerializer(qs, many=True).data)
+
+        serializer = AssignmentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(classroom=classroom, assigned_by=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class MyAssignmentsView(APIView):
+    """Student: passages assigned across every class they've joined."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        assignments = (
+            Assignment.objects
+            .filter(classroom__students=request.user)
+            .select_related('document', 'classroom')
+        )
+        return Response(AssignmentSerializer(assignments, many=True).data)
 
 
 def generate_questions_for_document(request, document_id):

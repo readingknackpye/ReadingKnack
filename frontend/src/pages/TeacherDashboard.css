@@ -418,6 +418,45 @@
     cursor: not-allowed;
 }
 
+/* ---------- Assignments (expanded) ---------- */
+
+.assignmentsSection {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px dashed #e5e1f5;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.assignmentForm {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.assignmentForm .editInput {
+    flex: 1;
+    min-width: 160px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    border: 2px solid #ecebf5;
+    font-size: 0.9rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.assignmentForm .editInput:focus {
+    border-color: var(--rk-purple);
+    box-shadow: 0 0 0 4px rgba(162, 89, 230, 0.12);
+}
+
+.assignmentForm .createClassButton {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+}
+
 /* ---------- States ---------- */
 
 .emptyMessage {

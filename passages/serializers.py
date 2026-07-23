@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from .models import (
     UploadedDocument, GradeLevel, SkillCategory,
-    QuizQuestion, QuizAnswer, QuizResponse, UserAnswer, Profile, Classroom
+    QuizQuestion, QuizAnswer, QuizResponse, UserAnswer, Profile, Classroom, Topic, Assignment
 )
 
 class UserSerializer(serializers.ModelSerializer):
@@ -56,6 +56,19 @@ class ClassroomSerializer(serializers.ModelSerializer):
     def get_student_count(self, obj):
         return obj.students.count()
 
+class AssignmentSerializer(serializers.ModelSerializer):
+    document_title = serializers.CharField(source='document.title', read_only=True)
+    classroom_name = serializers.CharField(source='classroom.name', read_only=True)
+    document = serializers.PrimaryKeyRelatedField(queryset=UploadedDocument.objects.all())
+
+    class Meta:
+        model = Assignment
+        fields = [
+            'id', 'classroom', 'classroom_name', 'document', 'document_title',
+            'instructions', 'due_at', 'created_at',
+        ]
+        read_only_fields = ['id', 'classroom', 'created_at']
+
 class GradeLevelSerializer(serializers.ModelSerializer):
     class Meta:
         model = GradeLevel
@@ -73,6 +86,12 @@ class UploadedDocumentSerializer(serializers.ModelSerializer):
     skill_category = serializers.PrimaryKeyRelatedField(
         queryset=SkillCategory.objects.all(), required=False, allow_null=True
     )
+    topic = serializers.PrimaryKeyRelatedField(
+        queryset=Topic.objects.all(), required=False, allow_null=True
+    )
+    topic_name = serializers.CharField(source='topic.name', read_only=True)
+    program_display = serializers.CharField(source='get_program_display', read_only=True)
+    difficulty_display = serializers.CharField(source='get_difficulty_display', read_only=True)
 
     class Meta:
         model = UploadedDocument
@@ -118,6 +137,7 @@ class StudentDashboardSerializer(serializers.ModelSerializer):
             'total_questions',
             'percentage',
             'duration',
+            'duration_seconds',
             'submitted_at',
         ]
 
