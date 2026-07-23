@@ -11,13 +11,12 @@ const Signup = () => {
     password: '',
     password2: '',
     first_name: '',
-    last_name: ''
+    last_name: '',
+    role: 'student'
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [isTeacher, setIsTeacher] = useState(false);
-  const [accessCode, setAccessCode] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -61,7 +60,7 @@ const Signup = () => {
         password2: formData.password2,
         first_name: formData.first_name,
         last_name: formData.last_name,
-        access_code: accessCode
+        role: formData.role
       });
 
       console.log('Signup response:', response);
@@ -75,7 +74,8 @@ const Signup = () => {
           password: '',
           password2: '',
           first_name: '',
-          last_name: ''
+          last_name: '',
+          role: 'student'
         });
         
         // Redirect to login after 2 seconds
@@ -197,31 +197,30 @@ const Signup = () => {
             className="signupInput"
             required
           />
-          {/* Teacher Toggle */}
-          <div style={{ marginBottom: '15px', textAlign: 'left' }}>
-            <label style={{ cursor: 'pointer', fontWeight: 'bold' }}>
+
+          <div style={{ display: 'flex', gap: '20px', margin: '10px 0 15px', justifyContent: 'center' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
               <input
-                type="checkbox"
-                checked={isTeacher}
-                onChange={(e) => setIsTeacher(e.target.checked)}
-                style={{ marginRight: '8px' }}
+                type="radio"
+                name="role"
+                value="student"
+                checked={formData.role === 'student'}
+                onChange={handleChange}
               />
-              I am a Teacher
+              Student
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+              <input
+                type="radio"
+                name="role"
+                value="teacher"
+                checked={formData.role === 'teacher'}
+                onChange={handleChange}
+              />
+              Teacher
             </label>
           </div>
 
-          {/* Conditional Secret Code Input */}
-          {isTeacher && (
-            <input
-              type="text"
-              placeholder="Educator Access Code"
-              value={accessCode}
-              onChange={(e) => setAccessCode(e.target.value)}
-              className="logInInput" 
-              required={isTeacher}
-            />
-          )}
-          
           <button
             className="signUpButton"
             type="submit"

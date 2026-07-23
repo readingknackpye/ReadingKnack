@@ -8,7 +8,7 @@ from django.middleware.csrf import get_token
 from django.http import JsonResponse
 from passages.models import (
     UploadedDocument, QuizQuestion, QuizAnswer,
-    QuizResponse, UserAnswer, GradeLevel, SkillCategory
+    QuizResponse, UserAnswer, GradeLevel, SkillCategory, Classroom
 )
 from django import forms
 from docx import Document
@@ -22,18 +22,20 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
 from .serializers import (
     UploadedDocumentSerializer, QuizQuestionSerializer, QuizAnswerSerializer,
-    QuizResponseSerializer, DocumentDetailSerializer, GradeLevelSerializer, 
-    SkillCategorySerializer, UserRegistrationSerializer, UserSerializer,StudentDashboardSerializer
+    QuizResponseSerializer, DocumentDetailSerializer, GradeLevelSerializer,
+    SkillCategorySerializer, UserRegistrationSerializer, UserSerializer,StudentDashboardSerializer,
+    ClassroomSerializer
 )
 from django.http import JsonResponse
 import json
 from .authentication import CsrfExemptSessionAuthentication
+from .permissions import IsTeacher
 import os
 from .docx_parser import parse_uploaded_docx
 from passages.gemini_utils import generate_questions, parse_questions, save_parsed_questions
 from passages import serializers
 from django.db import transaction
-from .importer import import_document 
+from .importer import import_document
 from .pye_parser import PYEParseError
 
 def upload_document(request):
@@ -122,9 +124,10 @@ class UploadedDocumentViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
-        if not request.user.is_staff:
+        profile = getattr(request.user, 'profile', None)
+        if not (profile and profile.role == 'teacher'):
             return Response(
-                {"detail": "Only administrators can upload documents."},
+                {"detail": "Only teacher accounts can upload documents."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -295,6 +298,18 @@ class GradeLevelViewSet(viewsets.ModelViewSet):
 class SkillCategoryViewSet(viewsets.ModelViewSet):
     queryset = SkillCategory.objects.all()
     serializer_class = SkillCategorySerializer
+
+
+class ClassroomViewSet(viewsets.ModelViewSet):
+    authentication_classes = [CsrfExemptSessionAuthentication]
+    serializer_class = ClassroomSerializer
+    permission_classes = [IsAuthenticated, IsTeacher]
+
+    def get_queryset(self):
+        return Classroom.objects.filter(teacher=self.request.user).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        serializer.save(teacher=self.request.user)
 
 
 def generate_questions_for_document(request, document_id):

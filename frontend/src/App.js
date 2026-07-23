@@ -11,8 +11,10 @@ import Profile from './pages/Profile';
 import Results from './pages/Results';
 import Navbar from './components/Navbar';
 import UploadDocument from './pages/UploadDocument';
+import TeacherDashboard from './pages/TeacherDashboard';
 import ReviewDocument from './pages/ReviewDocument';
 import StudentDashboard from './pages/StudentDashboard';
+import NotFound from './components/NotFound'; 
 
 function App() {
   return (
@@ -27,9 +29,10 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
         <Route path="/review/:documentId" element={<ReviewDocument />} />
-        <Route path="/student-dashboard" element={<StudentDashboard />}
-/>
+        <Route path="/student-dashboard" element={<StudentDashboard />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );

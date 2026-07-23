@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL ||
+  `${window.location.protocol}//${window.location.hostname}:8000/api`;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -91,6 +93,13 @@ export const quizAPI = {
 
   // Get student dashboard data
   getStudentDashboard: () => api.get('/student-dashboard/'),
+};
+
+// Classrooms API (teacher only)
+export const classroomsAPI = {
+  getAll: () => api.get('/classrooms/'),
+  create: (data) => api.post('/classrooms/', data),
+  delete: (id) => api.delete(`/classrooms/${id}/`),
 };
 
 // Grade Levels API
