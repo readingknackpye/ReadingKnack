@@ -39,11 +39,22 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         Profile.objects.create(user=user, role=role)
         return user
 
+class ClassroomStudentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name', 'last_name', 'email']
+
 class ClassroomSerializer(serializers.ModelSerializer):
+    students = ClassroomStudentSerializer(many=True, read_only=True)
+    student_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Classroom
-        fields = ['id', 'name', 'teacher', 'created_at']
-        read_only_fields = ['id', 'teacher', 'created_at']
+        fields = ['id', 'name', 'teacher', 'join_code', 'students', 'student_count', 'created_at']
+        read_only_fields = ['id', 'teacher', 'join_code', 'students', 'created_at']
+
+    def get_student_count(self, obj):
+        return obj.students.count()
 
 class GradeLevelSerializer(serializers.ModelSerializer):
     class Meta:

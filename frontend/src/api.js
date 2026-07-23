@@ -93,11 +93,17 @@ export const quizAPI = {
   getStudentDashboard: () => api.get('/student-dashboard/'),
 };
 
-// Classrooms API (teacher only)
+// Classrooms API
 export const classroomsAPI = {
+  // Teacher: manage own classes
   getAll: () => api.get('/classrooms/'),
   create: (data) => api.post('/classrooms/', data),
   delete: (id) => api.delete(`/classrooms/${id}/`),
+  regenerateCode: (id) => api.post(`/classrooms/${id}/regenerate-code/`),
+  removeStudent: (id, studentId) => api.post(`/classrooms/${id}/remove-student/`, { student_id: studentId }),
+
+  // Student: join a class with a teacher-shared code
+  join: (code) => api.post('/classrooms/join/', { code }),
 };
 
 // Grade Levels API

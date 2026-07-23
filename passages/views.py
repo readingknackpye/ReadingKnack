@@ -8,7 +8,7 @@ from django.middleware.csrf import get_token
 from django.http import JsonResponse
 from passages.models import (
     UploadedDocument, QuizQuestion, QuizAnswer,
-    QuizResponse, UserAnswer, GradeLevel, SkillCategory, Classroom
+    QuizResponse, UserAnswer, GradeLevel, SkillCategory, Classroom, Profile
 )
 from django import forms
 from docx import Document
@@ -280,11 +280,63 @@ class ClassroomViewSet(viewsets.ModelViewSet):
     serializer_class = ClassroomSerializer
     permission_classes = [IsAuthenticated, IsTeacher]
 
+    def get_permissions(self):
+        # Students need to join a class without being teachers themselves.
+        if self.action == 'join':
+            return [IsAuthenticated()]
+        return [IsAuthenticated(), IsTeacher()]
+
     def get_queryset(self):
-        return Classroom.objects.filter(teacher=self.request.user).order_by('-created_at')
+        return (
+            Classroom.objects.filter(teacher=self.request.user)
+            .order_by('-created_at')
+            .prefetch_related('students')
+        )
 
     def perform_create(self, serializer):
         serializer.save(teacher=self.request.user)
+
+    @drf_action(detail=False, methods=['post'])
+    def join(self, request):
+        """Student joins a classroom using the teacher-shared class code."""
+        profile = getattr(request.user, 'profile', None)
+        if not (profile and profile.role == Profile.ROLE_STUDENT):
+            return Response(
+                {"detail": "Only student accounts can join a class."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        code = (request.data.get('code') or '').strip().upper()
+        if not code:
+            return Response({"detail": "A class code is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            classroom = Classroom.objects.get(join_code=code)
+        except Classroom.DoesNotExist:
+            return Response({"detail": "That class code doesn't match any class."}, status=status.HTTP_404_NOT_FOUND)
+
+        if classroom.students.filter(id=request.user.id).exists():
+            return Response({"detail": f"You're already enrolled in {classroom.name}."}, status=status.HTTP_400_BAD_REQUEST)
+
+        classroom.students.add(request.user)
+        return Response(ClassroomSerializer(classroom).data, status=status.HTTP_200_OK)
+
+    @drf_action(detail=True, methods=['post'], url_path='remove-student')
+    def remove_student(self, request, pk=None):
+        classroom = self.get_object()
+        student_id = request.data.get('student_id')
+        if not student_id:
+            return Response({"detail": "student_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        classroom.students.remove(student_id)
+        return Response(ClassroomSerializer(classroom).data)
+
+    @drf_action(detail=True, methods=['post'], url_path='regenerate-code')
+    def regenerate_code(self, request, pk=None):
+        classroom = self.get_object()
+        classroom.join_code = ''
+        classroom.save()
+        return Response(ClassroomSerializer(classroom).data)
 
 
 def generate_questions_for_document(request, document_id):

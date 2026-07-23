@@ -1,11 +1,14 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { quizAPI } from '../api';
+import { quizAPI, classroomsAPI } from '../api';
 import './StudentDashboard.css';
 
 const StudentDashboard = () => {
   const [testHistory, setTestHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [joinCode, setJoinCode] = useState('');
+  const [joining, setJoining] = useState(false);
+  const [joinResult, setJoinResult] = useState(null); // { type: 'success' | 'error', message }
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -30,6 +33,26 @@ const StudentDashboard = () => {
 
     loadDashboard();
   }, []);
+
+  const handleJoinClass = async (e) => {
+    e.preventDefault();
+    const code = joinCode.trim();
+    if (!code) return;
+
+    try {
+      setJoining(true);
+      setJoinResult(null);
+      const response = await classroomsAPI.join(code);
+      setJoinResult({ type: 'success', message: `You've joined ${response.data.name}! Your teacher can now see your progress.` });
+      setJoinCode('');
+    } catch (err) {
+      console.error('Join class error:', err);
+      const message = err.response?.data?.detail || 'Could not join that class. Double-check the code and try again.';
+      setJoinResult({ type: 'error', message });
+    } finally {
+      setJoining(false);
+    }
+  };
 
   // automatically calculate stats whenever testHistory changes
   const stats = useMemo(() => {
@@ -112,6 +135,33 @@ const StudentDashboard = () => {
       <section className="student-dashboard-header">
         <h1>Student Dashboard</h1>
         <p>View your previous tests and performance.</p>
+      </section>
+
+      {/* Join a Class Section */}
+      <section className="join-class-card">
+        <div className="join-class-text">
+          <h2>Join a Class</h2>
+          <p>Enter the code your teacher shared with you to join their class.</p>
+        </div>
+        <form className="join-class-form" onSubmit={handleJoinClass}>
+          <input
+            type="text"
+            placeholder="e.g. 7F3K9X"
+            value={joinCode}
+            onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+            maxLength={6}
+            className="join-class-input"
+            required
+          />
+          <button type="submit" className="join-class-button" disabled={joining}>
+            {joining ? 'Joining...' : 'Join Class'}
+          </button>
+        </form>
+        {joinResult && (
+          <div className={`join-class-result join-class-result-${joinResult.type}`}>
+            {joinResult.message}
+          </div>
+        )}
       </section>
 
       {/* Stat Card Section */}

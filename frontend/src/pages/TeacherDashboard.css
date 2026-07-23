@@ -4,32 +4,96 @@
     align-items: center;
     margin-top: 60px;
     padding: 20px;
-    font-family: 'Arial', sans-serif;
+    font-family: 'Montserrat', Arial, sans-serif;
 }
 
 .dashboardCard {
     width: 1000px;
     max-width: 100%;
-    border: 4px solid;
-    border-image-slice: 1;
-    border-image-source: linear-gradient(90deg, var(--rk-purple), var(--rk-blue), var(--rk-pink));
-    border-radius: 20px;
-    box-shadow: 20px 20px 12px rgba(162,89,230,0.08);
+    border-radius: 24px;
+    background: #fff;
+    box-shadow: 0 24px 60px rgba(34, 34, 59, 0.10), 0 2px 8px rgba(162, 89, 230, 0.08);
     overflow: hidden;
 }
 
+/* ---------- Header ---------- */
+
 .dashboardHeader {
-    font-size: 2.5rem;
-    font-weight: 900;
-    padding: 30px;
-    text-align: center;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 40px 40px 32px;
+    background: linear-gradient(120deg, var(--rk-purple) 0%, var(--rk-blue) 55%, var(--rk-pink) 100%);
+    color: #fff;
 }
 
-.dashboardContent {
-    padding: 40px 30px;
+.dashboardHeaderText h1 {
+    margin: 6px 0 8px;
+    font-size: 2.2rem;
+    color: #fff;
+    letter-spacing: -0.5px;
+}
+
+.dashboardEyebrow {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 5px 12px;
+    border-radius: 999px;
+}
+
+.dashboardSubtitle {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.88);
+    max-width: 460px;
+}
+
+.dashboardStats {
+    display: flex;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.statPill {
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    align-items: center;
+    justify-content: center;
+    min-width: 84px;
+    padding: 12px 16px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.16);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.statValue {
+    font-size: 1.5rem;
+    font-weight: 900;
+    line-height: 1.1;
+}
+
+.statLabel {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+/* ---------- Content ---------- */
+
+.dashboardContent {
+    padding: 32px 40px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
 }
 
 .createClassForm {
@@ -39,87 +103,394 @@
 
 .createClassForm .editInput {
     flex: 1;
+    padding: 13px 18px;
+    border-radius: 14px;
+    border: 2px solid #ecebf5;
+    font-size: 0.98rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.createClassForm .editInput:focus {
+    border-color: var(--rk-purple);
+    box-shadow: 0 0 0 4px rgba(162, 89, 230, 0.12);
 }
 
 .createClassButton {
-    padding: 12px 25px;
+    padding: 12px 26px;
     border: none;
-    border-radius: 25px;
-    font-size: 1rem;
-    font-weight: 600;
+    border-radius: 14px;
+    font-size: 0.98rem;
+    font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s ease;
-    background-color: #007bff;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    background: linear-gradient(90deg, var(--rk-pink), var(--rk-purple), var(--rk-blue));
     color: white;
     white-space: nowrap;
+    box-shadow: 0 6px 16px rgba(162, 89, 230, 0.28);
 }
 
-.createClassButton:hover {
-    background-color: #0056b3;
+.createClassButton:hover:not(:disabled) {
     transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(162, 89, 230, 0.34);
 }
 
 .createClassButton:disabled {
-    opacity: 0.7;
+    opacity: 0.6;
     cursor: not-allowed;
+    transform: none;
 }
+
+/* ---------- Class list ---------- */
 
 .classList {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 14px;
 }
 
 .classCard {
+    border-radius: 18px;
+    background: #fbfaff;
+    border: 1px solid #eeecf8;
+    overflow: hidden;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.classCard:hover {
+    border-color: #e2ddf7;
+    box-shadow: 0 6px 20px rgba(34, 34, 59, 0.06);
+}
+
+.classCardExpanded {
+    border-color: var(--rk-purple);
+    box-shadow: 0 10px 28px rgba(162, 89, 230, 0.14);
+}
+
+.classCardTop {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px;
-    border-radius: 10px;
-    background-color: #f8f9fa;
+    gap: 16px;
+    padding: 18px 20px;
+    flex-wrap: wrap;
+}
+
+.classNameToggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: none;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+    flex: 1;
+    min-width: 220px;
+}
+
+.classNameToggle:hover {
+    background: none;
+}
+
+.classChevron {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    font-size: 1.1rem;
+    color: var(--rk-purple);
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.classChevronOpen {
+    transform: rotate(90deg);
 }
 
 .className {
-    font-weight: 600;
-    font-size: 1.1rem;
+    font-weight: 800;
+    font-size: 1.08rem;
+    color: var(--rk-dark);
+}
+
+.rosterBadge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--rk-purple);
+    background: rgba(162, 89, 230, 0.1);
+    padding: 4px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.classCardActions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.joinCodeChip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px 6px 14px;
+    border-radius: 999px;
+    background: var(--rk-dark);
+}
+
+.joinCodeLabel {
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.joinCodeValue {
+    font-family: 'Courier New', monospace;
+    font-weight: 800;
+    font-size: 0.95rem;
+    letter-spacing: 2px;
+    color: #fff;
+}
+
+.copyCodeButton {
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: none;
+    box-shadow: none;
+    font-size: 0.78rem;
+    font-weight: 700;
+    background: linear-gradient(90deg, var(--rk-pink), var(--rk-purple), var(--rk-blue));
+    color: #fff;
+    cursor: pointer;
 }
 
 .deleteClassButton {
     padding: 8px 18px;
-    border-radius: 20px;
-    border: 2px solid #dc3545;
+    border-radius: 999px;
+    border: 2px solid #f1d5da;
     background: #fff;
     color: #dc3545;
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 0.85rem;
     cursor: pointer;
+    box-shadow: none;
     transition: all 0.2s ease;
 }
 
 .deleteClassButton:hover {
     background: #dc3545;
     color: #fff;
+    border-color: #dc3545;
 }
 
-.emptyMessage {
+/* ---------- Roster (expanded) ---------- */
+
+.classRoster {
+    padding: 4px 20px 20px;
+    border-top: 1px dashed #e5e1f5;
+    margin-top: 2px;
+}
+
+.classRosterHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 0 10px;
+    font-size: 0.85rem;
+    color: #777;
+    font-weight: 500;
+}
+
+.regenerateButton {
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 2px solid #ecebf5;
+    background: #fff;
+    color: var(--rk-purple);
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: none;
+    white-space: nowrap;
+}
+
+.regenerateButton:hover:not(:disabled) {
+    border-color: var(--rk-purple);
+    background: rgba(162, 89, 230, 0.06);
+}
+
+.regenerateButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.rosterEmpty {
+    padding: 18px;
     text-align: center;
-    font-size: 1.1rem;
+    font-size: 0.88rem;
+    color: #999;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px dashed #e5e1f5;
+}
+
+.rosterList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.rosterItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: #fff;
+    border: 1px solid #f0eefa;
+}
+
+.rosterAvatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--rk-pink), var(--rk-purple));
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.rosterInfo {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.rosterName {
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: var(--rk-dark);
+}
+
+.rosterEmail {
+    font-size: 0.78rem;
+    color: #999;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rosterRemoveButton {
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 2px solid #f1d5da;
+    background: #fff;
+    color: #dc3545;
+    font-weight: 700;
+    font-size: 0.76rem;
+    cursor: pointer;
+    box-shadow: none;
+    flex-shrink: 0;
+}
+
+.rosterRemoveButton:hover:not(:disabled) {
+    background: #dc3545;
+    color: #fff;
+    border-color: #dc3545;
+}
+
+.rosterRemoveButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ---------- States ---------- */
+
+.emptyMessage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-align: center;
     color: #666;
-    padding: 30px;
+    padding: 50px 30px;
+    background: #fbfaff;
+    border-radius: 18px;
+    border: 1px dashed #e5e1f5;
+}
+
+.emptyIcon {
+    font-size: 2.2rem;
+    margin-bottom: 6px;
+}
+
+.emptyMessage p {
+    margin: 0;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--rk-dark);
+}
+
+.emptyMessage span {
+    font-size: 0.88rem;
+    color: #999;
 }
 
 .loadingMessage {
     text-align: center;
-    font-size: 1.2rem;
-    color: #666;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #999;
     padding: 40px;
 }
 
 .errorMessage {
     text-align: center;
-    font-size: 1rem;
+    font-size: 0.92rem;
+    font-weight: 600;
     color: #dc3545;
-    padding: 15px;
-    background-color: #f8d7da;
+    padding: 14px;
+    background-color: #fdf1f2;
     border: 1px solid #f5c6cb;
-    border-radius: 10px;
+    border-radius: 12px;
+}
+
+@media (max-width: 640px) {
+    .dashboardHeader {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 32px 24px;
+    }
+
+    .dashboardContent {
+        padding: 24px;
+    }
+
+    .createClassForm {
+        flex-direction: column;
+    }
+
+    .classCardTop {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .classCardActions {
+        width: 100%;
+        justify-content: space-between;
+    }
 }
